@@ -311,7 +311,7 @@ export default function Drawings({
               authFetch(
                 apiUrl(`/projects/${encodeURIComponent(project.id)}/measurements/`),
               ),
-              fetchProjectFormulas(project.id),
+              fetchProjectFormulas(project.id, selectedCustomer.id),
             ])
             const measurements = await readJson<BackendMeasurement[]>(response)
 

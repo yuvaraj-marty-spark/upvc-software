@@ -3,6 +3,14 @@ const API_BASE_URL = rawBaseUrl ? rawBaseUrl.replace(/\/+$/, '') : '/api'
 
 const SESSION_TOKEN_KEY = 'ls_interiors_passcode_token'
 const SESSION_LABEL_KEY = 'ls_interiors_passcode_label'
+const CACHED_APP_STORAGE_KEYS = [
+  'ls-interiors-customers',
+  'ls-interiors-saved-orders',
+  'ls-interiors-project-formulas',
+  'ls-interiors-customer-formulas',
+  'ls-interiors-draft-formulas',
+  'ls-interiors-custom-formulas',
+]
 
 export function apiUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
@@ -25,6 +33,13 @@ export function setPasscodeSession(token: string, label: string): void {
 export function clearPasscodeSession(): void {
   sessionStorage.removeItem(SESSION_TOKEN_KEY)
   sessionStorage.removeItem(SESSION_LABEL_KEY)
+  try {
+    for (const key of CACHED_APP_STORAGE_KEYS) {
+      localStorage.removeItem(key)
+    }
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 export async function authFetch(input: string, init: RequestInit = {}): Promise<Response> {

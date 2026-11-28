@@ -179,10 +179,16 @@ function App() {
           />
         ) : activePage === 'settings' ? (
           <Settings
-            key={activeFormulaProjectId || 'new-order'}
+            key={`${selectedCustomer?.id || 'none'}-${activeFormulaProjectId || 'new-order'}`}
             language={language}
             selectedProjectId={activeFormulaProjectId}
             selectedCustomer={selectedCustomer}
+            onSelectCustomer={(customer, projectId) => {
+              clearDraftFormulas()
+              setSelectedCustomer(customer)
+              setSelectedProjectId(projectId)
+              setActiveFormulaProjectId(projectId)
+            }}
           />
         ) : (
           <section className="dashboard-placeholder">{currentTitle.en}</section>

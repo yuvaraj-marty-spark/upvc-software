@@ -2,14 +2,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Language } from '../components/Sidebar'
 import type { Customer } from './Customers'
+import { apiUrl, authFetch } from '../utils/api'
 import {
   clearDraftFormulas,
-  fetchProjectFormulas,
-  loadDraftFormulas,
-  loadLocalProjectFormulas,
-  saveDraftFormulas,
-  saveLocalProjectFormulas,
-  saveProjectFormulasToServer,
+  fetchCustomerOrProjectFormulas,
+  loadLocalCustomerOrProjectFormulas,
+  saveCustomerOrProjectFormulasToServer,
+  saveLocalCustomerOrProjectFormulas,
 } from '../utils/formulaStorage'
 import {
   calculateSlidingWindow,
@@ -389,55 +388,151 @@ const FORMULA_PRESETS: Record<WindowModelId, ModelFormulaPreset> = {
   },
 }
 
+type SettingsProjectSummary = {
+  id: string
+  customer_id?: string | null
+  serial_number?: string | null
+  name: string
+}
+
 interface SettingsProps {
   language: Language
   selectedProjectId?: string | null
   selectedCustomer?: Customer | null
+  onSelectCustomer?: (customer: Customer | null, projectId: string | null) => void
 }
 
 export default function Settings({
   language,
   selectedProjectId = null,
   selectedCustomer = null,
+  onSelectCustomer,
 }: SettingsProps) {
   const [selectedModel, setSelectedModel] = useState<WindowModelId>('58-2')
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    try {
+      const raw = localStorage.getItem('ls-interiors-customers')
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          const activeList = (parsed as Customer[]).filter((c) => c.is_active)
+          if (
+            selectedCustomer &&
+            !activeList.some((c) => c.id === selectedCustomer.id)
+          ) {
+            return [selectedCustomer, ...activeList]
+          }
+          return activeList
+        }
+      }
+    } catch {
+      // Ignore cache read error
+    }
+    return selectedCustomer ? [selectedCustomer] : []
+  })
+  const [projectByCustomerId, setProjectByCustomerId] = useState<
+    Record<string, SettingsProjectSummary>
+  >({})
+
+  const effectiveCustomerId = selectedCustomer?.id || null
+  const matchedCustomerProject = effectiveCustomerId
+    ? projectByCustomerId[effectiveCustomerId] || null
+    : null
+  const effectiveProjectId =
+    selectedProjectId || matchedCustomerProject?.id || null
+
   const [customFormulas, setCustomFormulas] = useState<
     Record<string, CustomDeductionOverrides>
   >(() =>
-    selectedProjectId
-      ? loadLocalProjectFormulas(selectedProjectId)
-      : loadDraftFormulas()
+    loadLocalCustomerOrProjectFormulas(
+      selectedCustomer?.id ?? null,
+      selectedProjectId
+    )
   )
   const [saveStatus, setSaveStatus] = useState<string>('')
   const [isSyncing, setIsSyncing] = useState(false)
   const syncTimerRef = useRef<number | null>(null)
   const latestFormulasRef = useRef(customFormulas)
-  const latestProjectIdRef = useRef(selectedProjectId)
+  const latestCustomerIdRef = useRef(effectiveCustomerId)
+  const latestProjectIdRef = useRef(effectiveProjectId)
   const hasPendingSyncRef = useRef(false)
 
   useEffect(() => {
     latestFormulasRef.current = customFormulas
-    latestProjectIdRef.current = selectedProjectId
-  }, [customFormulas, selectedProjectId])
+    latestCustomerIdRef.current = effectiveCustomerId
+    latestProjectIdRef.current = effectiveProjectId
+  }, [customFormulas, effectiveCustomerId, effectiveProjectId])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadCustomersAndProjects = async () => {
+      try {
+        const [custResp, projResp] = await Promise.all([
+          authFetch(apiUrl('/customers/')),
+          authFetch(apiUrl('/projects/')),
+        ])
+
+        if (!cancelled && custResp.ok) {
+          const custList: unknown = await custResp.json()
+          if (Array.isArray(custList)) {
+            const activeList = (custList as Customer[]).filter((c) => c.is_active)
+            if (
+              selectedCustomer &&
+              !activeList.some((c) => c.id === selectedCustomer.id)
+            ) {
+              activeList.unshift(selectedCustomer)
+            }
+            setCustomers(activeList)
+          }
+        }
+
+        if (!cancelled && projResp.ok) {
+          const projList: unknown = await projResp.json()
+          if (Array.isArray(projList)) {
+            const map: Record<string, SettingsProjectSummary> = {}
+            for (const proj of projList as SettingsProjectSummary[]) {
+              if (proj.customer_id && !map[proj.customer_id]) {
+                map[proj.customer_id] = proj
+              }
+            }
+            setProjectByCustomerId(map)
+          }
+        }
+      } catch {
+        // Offline cache remains usable for customer list
+      }
+    }
+
+    void loadCustomersAndProjects()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedCustomer])
 
   const activePreset = FORMULA_PRESETS[selectedModel]
   const activeOverrides = customFormulas[selectedModel] || {}
 
-  const persistFormulasLocal = (nextFormulas: Record<string, CustomDeductionOverrides>) => {
-    if (selectedProjectId) {
-      saveLocalProjectFormulas(selectedProjectId, nextFormulas)
-    } else {
-      saveDraftFormulas(nextFormulas)
-    }
+  const persistFormulasLocal = (
+    nextFormulas: Record<string, CustomDeductionOverrides>
+  ) => {
+    saveLocalCustomerOrProjectFormulas(
+      effectiveCustomerId,
+      effectiveProjectId,
+      nextFormulas
+    )
   }
 
   useEffect(() => {
     let cancelled = false
-    if (!selectedProjectId) {
+    if (!effectiveCustomerId && !effectiveProjectId) {
       return
     }
     const loadFromBackend = async () => {
-      const formulas = await fetchProjectFormulas(selectedProjectId)
+      const formulas = await fetchCustomerOrProjectFormulas(
+        effectiveCustomerId,
+        effectiveProjectId
+      )
       if (!cancelled) {
         setCustomFormulas(formulas)
       }
@@ -449,27 +544,63 @@ export default function Settings({
         window.clearTimeout(syncTimerRef.current)
         syncTimerRef.current = null
       }
-      if (hasPendingSyncRef.current && latestProjectIdRef.current) {
+      if (
+        hasPendingSyncRef.current &&
+        (latestCustomerIdRef.current || latestProjectIdRef.current)
+      ) {
         hasPendingSyncRef.current = false
-        void saveProjectFormulasToServer(
+        void saveCustomerOrProjectFormulasToServer(
+          latestCustomerIdRef.current,
           latestProjectIdRef.current,
           latestFormulasRef.current
         )
       }
     }
-  }, [selectedProjectId])
+  }, [effectiveCustomerId, effectiveProjectId])
 
-  const scheduleBackendSync = (nextFormulas: Record<string, CustomDeductionOverrides>) => {
-    if (!selectedProjectId) return
+  const scheduleBackendSync = (
+    nextFormulas: Record<string, CustomDeductionOverrides>
+  ) => {
+    if (!effectiveCustomerId && !effectiveProjectId) return
     hasPendingSyncRef.current = true
     if (syncTimerRef.current !== null) {
       window.clearTimeout(syncTimerRef.current)
     }
-    const targetProjectId = selectedProjectId
+    const targetCustomerId = effectiveCustomerId
+    const targetProjectId = effectiveProjectId
     syncTimerRef.current = window.setTimeout(() => {
       hasPendingSyncRef.current = false
-      void saveProjectFormulasToServer(targetProjectId, nextFormulas)
+      void saveCustomerOrProjectFormulasToServer(
+        targetCustomerId,
+        targetProjectId,
+        nextFormulas
+      )
     }, 600)
+  }
+
+  const handleCustomerDropdownChange = async (nextCustomerId: string) => {
+    if (
+      hasPendingSyncRef.current &&
+      (effectiveCustomerId || effectiveProjectId)
+    ) {
+      hasPendingSyncRef.current = false
+      if (syncTimerRef.current !== null) {
+        window.clearTimeout(syncTimerRef.current)
+        syncTimerRef.current = null
+      }
+      await saveCustomerOrProjectFormulasToServer(
+        effectiveCustomerId,
+        effectiveProjectId,
+        latestFormulasRef.current
+      )
+    }
+    if (!nextCustomerId) {
+      onSelectCustomer?.(null, null)
+      return
+    }
+    const nextCustomer = customers.find((c) => c.id === nextCustomerId) || null
+    const matchedProjId = projectByCustomerId[nextCustomerId]?.id ?? null
+    onSelectCustomer?.(nextCustomer, matchedProjId)
   }
 
   const updateOverride = (
@@ -507,19 +638,28 @@ export default function Settings({
     }
     setIsSyncing(true)
     persistFormulasLocal(customFormulas)
-    const ok = selectedProjectId
-      ? await saveProjectFormulasToServer(selectedProjectId, customFormulas)
+    const hasTargetScope = Boolean(effectiveCustomerId || effectiveProjectId)
+    const ok = hasTargetScope
+      ? await saveCustomerOrProjectFormulasToServer(
+          effectiveCustomerId,
+          effectiveProjectId,
+          customFormulas
+        )
       : true
     setIsSyncing(false)
     setSaveStatus(
       ok
-        ? selectedProjectId
+        ? effectiveProjectId
           ? language === 'en'
-            ? 'Order Formula Settings Saved!'
+            ? 'Customer Order Formula Settings Saved!'
             : 'ஆர்டர் ஃபார்முலா அமைப்புகள் சேமிக்கப்பட்டன!'
-          : language === 'en'
-            ? 'Ready for New Order (Will Save with Order)!'
-            : 'புதிய ஆர்டருக்குத் தயார்!'
+          : effectiveCustomerId
+            ? language === 'en'
+              ? 'Customer Formula Settings Saved!'
+              : 'வாடிக்கையாளர் ஃபார்முலா அமைப்புகள் சேமிக்கப்பட்டன!'
+            : language === 'en'
+              ? 'Draft Preview Saved (Select a customer to save to their profile)'
+              : 'தற்காலிக முன்னோட்டம் சேமிக்கப்பட்டது'
         : language === 'en'
           ? 'Saved locally (server sync failed)'
           : 'உள்ளூரில் சேமிக்கப்பட்டது'
@@ -532,8 +672,12 @@ export default function Settings({
       const updated = { ...prev }
       delete updated[selectedModel]
       persistFormulasLocal(updated)
-      if (selectedProjectId) {
-        void saveProjectFormulasToServer(selectedProjectId, updated)
+      if (effectiveCustomerId || effectiveProjectId) {
+        void saveCustomerOrProjectFormulasToServer(
+          effectiveCustomerId,
+          effectiveProjectId,
+          updated
+        )
       }
       return updated
     })
@@ -544,14 +688,18 @@ export default function Settings({
   const resetAllModels = () => {
     const confirmed = window.confirm(
       language === 'en'
-        ? 'Are you sure you want to reset ALL profile formulas for this order to workshop standards?'
-        : 'இந்த ஆர்டருக்கான அனைத்து ஃபார்முலாக்களையும் ஆரம்ப நிலைக்கு மீட்டமைக்க விரும்புகிறீர்களா?'
+        ? 'Are you sure you want to reset ALL profile formulas for this customer to workshop standards?'
+        : 'இந்த வாடிக்கையாளருக்கான அனைத்து ஃபார்முலாக்களையும் ஆரம்ப நிலைக்கு மீட்டமைக்க விரும்புகிறீர்களா?'
     )
     if (!confirmed) return
 
     setCustomFormulas({})
-    if (selectedProjectId) {
-      void saveProjectFormulasToServer(selectedProjectId, {})
+    if (effectiveCustomerId || effectiveProjectId) {
+      void saveCustomerOrProjectFormulasToServer(
+        effectiveCustomerId,
+        effectiveProjectId,
+        {}
+      )
     } else {
       clearDraftFormulas()
     }
@@ -628,30 +776,91 @@ export default function Settings({
         </h2>
         <p>
           {language === 'en'
-            ? 'Customize millimeter cutting deductions and glass formulas per order. Every new customer/order starts at workshop defaults, and existing orders keep their own saved formulas.'
-            : 'ஒவ்வொரு ஆர்டருக்கும் தனித்தனியாக வெட்டு கழித்தல் மற்றும் கண்ணாடி கணக்கீடுகளை மாற்றவும்.'}
+            ? 'Customize millimeter cutting deductions and glass formulas independently for each customer. Every new customer starts at workshop defaults.'
+            : 'ஒவ்வொரு வாடிக்கையாளருக்கும் தனித்தனியாக வெட்டு கழித்தல் மற்றும் கண்ணாடி கணக்கீடுகளை மாற்றவும்.'}
         </p>
+
         <div
           style={{
-            marginTop: '10px',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: '13px',
-            fontWeight: 600,
-            background: selectedProjectId ? '#ecfdf5' : '#eff6ff',
-            color: selectedProjectId ? '#065f46' : '#1e40af',
-            border: selectedProjectId
+            marginTop: '12px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px',
+            alignItems: 'center',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            background: effectiveCustomerId ? '#ecfdf5' : '#fffbeb',
+            border: effectiveCustomerId
               ? '1px solid #a7f3d0'
-              : '1px solid #bfdbfe',
+              : '1px solid #fde68a',
           }}
         >
-          {selectedProjectId
-            ? `Editing formulas for saved order${
-                selectedCustomer?.name ? ` (${selectedCustomer.name})` : ''
-              }`
-            : `Editing formulas for New Order${
-                selectedCustomer?.name ? ` (${selectedCustomer.name})` : ''
-              } — starts at Workshop Default`}
+          <label
+            htmlFor="settings-customer-select"
+            style={{
+              fontSize: '13px',
+              fontWeight: 700,
+              color: effectiveCustomerId ? '#065f46' : '#92400e',
+            }}
+          >
+            {language === 'en' ? 'Customer:' : 'வாடிக்கையாளர்:'}
+          </label>
+          <select
+            id="settings-customer-select"
+            value={effectiveCustomerId || ''}
+            onChange={(e) => void handleCustomerDropdownChange(e.target.value)}
+            style={{
+              padding: '6px 10px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              fontSize: '13px',
+              fontWeight: 600,
+              background: '#ffffff',
+              color: '#0f172a',
+              minWidth: '240px',
+              maxWidth: '100%',
+            }}
+          >
+            <option value="">
+              {language === 'en'
+                ? '-- Select Customer (Workshop Default Preview) --'
+                : '-- வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும் --'}
+            </option>
+            {customers.map((customer) => {
+              const proj = projectByCustomerId[customer.id]
+              const projTag = proj?.serial_number
+                ? ` [${proj.serial_number}]`
+                : ''
+              return (
+                <option key={customer.id} value={customer.id}>
+                  {customer.serial_number ? `${customer.serial_number} · ` : ''}
+                  {customer.name}
+                  {customer.phone ? ` (${customer.phone})` : ''}
+                  {projTag}
+                </option>
+              )
+            })}
+          </select>
+
+          <span
+            style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: effectiveCustomerId ? '#065f46' : '#92400e',
+            }}
+          >
+            {effectiveCustomerId
+              ? effectiveProjectId
+                ? language === 'en'
+                  ? `Isolated formula settings for ${selectedCustomer?.name || 'Customer'}${matchedCustomerProject?.serial_number ? ` (${matchedCustomerProject.serial_number})` : ''}`
+                  : `${selectedCustomer?.name || 'வாடிக்கையாளர்'} — தனிப்பட்ட ஃபார்முலா அமைப்புகள்`
+                : language === 'en'
+                  ? `Isolated formula settings for ${selectedCustomer?.name || 'Customer'} (New Order — starts at Workshop Default)`
+                  : `${selectedCustomer?.name || 'வாடிக்கையாளர்'} — புதிய ஆர்டர் (ஆரம்ப நிலை)`
+              : language === 'en'
+                ? 'Select or create a customer to save isolated formula settings permanently.'
+                : 'நிரந்தரமாக சேமிக்க ஒரு வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும்.'}
+          </span>
         </div>
       </div>
 

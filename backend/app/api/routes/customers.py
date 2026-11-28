@@ -82,57 +82,6 @@ def create_customer(
         else None
     )
 
-    # Find an existing active customer by phone or case-insensitive name.
-    existing_query = select(Customer).where(
-        Customer.shop_id == shop.id,
-        Customer.is_active.is_(True),
-    )
-
-    if cleaned_phone:
-        existing_query = existing_query.where(
-            (Customer.phone == cleaned_phone)
-            | (Customer.name.ilike(cleaned_name))
-        )
-    else:
-        existing_query = existing_query.where(
-            Customer.name.ilike(cleaned_name)
-        )
-
-    existing_customer = db.scalar(existing_query)
-
-    if existing_customer:
-        # Reuse and reactivate the existing customer.
-        existing_customer.name = cleaned_name
-
-        if cleaned_serial:
-            validate_unique_serial(
-                db,
-                shop,
-                cleaned_serial,
-                current_customer_id=existing_customer.id,
-            )
-        elif existing_customer.serial_number:
-            cleaned_serial = existing_customer.serial_number
-        else:
-            cleaned_serial = generate_customer_serial(db, shop)
-
-        if cleaned_phone:
-            existing_customer.phone = cleaned_phone
-
-        if cleaned_email:
-            existing_customer.email = cleaned_email
-
-        if customer_data.address:
-            existing_customer.address = customer_data.address
-
-        if cleaned_serial:
-            existing_customer.serial_number = cleaned_serial
-
-        existing_customer.is_active = True
-        db.commit()
-
-        return existing_customer
-
     if cleaned_serial:
         validate_unique_serial(db, shop, cleaned_serial)
     else:
@@ -359,25 +308,30 @@ def permanently_delete_customer(
             )
         )
 
-        # Remove any saved formula settings belonging to deleted projects.
-        if deleted_proj_keys:
-            setting = db.scalar(
-                select(ShopFormulaSetting).where(ShopFormulaSetting.shop_id == shop.id)
-            )
-            if setting and setting.formulas_json:
-                try:
-                    data = json.loads(setting.formulas_json)
-                    projects_map = data.get("__projects__") if isinstance(data, dict) else None
-                    if isinstance(projects_map, dict):
-                        changed = False
+        # Remove any saved formula settings belonging to this customer or its deleted projects.
+        deleted_cust_key = str(customer.id)
+        setting = db.scalar(
+            select(ShopFormulaSetting).where(ShopFormulaSetting.shop_id == shop.id)
+        )
+        if setting and setting.formulas_json:
+            try:
+                data = json.loads(setting.formulas_json)
+                if isinstance(data, dict):
+                    changed = False
+                    projects_map = data.get("__projects__")
+                    if isinstance(projects_map, dict) and deleted_proj_keys:
                         for key in deleted_proj_keys:
                             if key in projects_map:
                                 projects_map.pop(key, None)
                                 changed = True
-                        if changed:
-                            setting.formulas_json = json.dumps(data)
-                except ValueError:
-                    pass
+                    customers_map = data.get("__customers__")
+                    if isinstance(customers_map, dict) and deleted_cust_key in customers_map:
+                        customers_map.pop(deleted_cust_key, None)
+                        changed = True
+                    if changed:
+                        setting.formulas_json = json.dumps(data)
+            except ValueError:
+                pass
 
         # Delete the customer after its dependent records.
         db.delete(customer)

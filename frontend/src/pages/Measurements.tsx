@@ -11,10 +11,9 @@ import { resolveWindowLabels } from '../utils/windowIdentity'
 import { apiUrl, authFetch } from '../utils/api'
 import {
   clearDraftFormulas,
-  fetchProjectFormulas,
-  loadDraftFormulas,
-  loadLocalProjectFormulas,
-  saveProjectFormulasToServer,
+  fetchCustomerOrProjectFormulas,
+  loadLocalCustomerOrProjectFormulas,
+  saveCustomerOrProjectFormulasToServer,
 } from '../utils/formulaStorage'
 import {
   calculateSlidingWindow,
@@ -350,6 +349,11 @@ function Measurements({
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(
     initialProjectId || null
   )
+  const [loadedCustomerId, setLoadedCustomerId] = useState<string | null>(
+    selectedCustomer?.id ?? null
+  )
+  const activeCustomerId = selectedCustomer?.id || loadedCustomerId || null
+
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingProject, setIsLoadingProject] = useState(
     Boolean(initialProjectId || selectedCustomer?.id)
@@ -362,9 +366,10 @@ function Measurements({
 
   const [customFormulas, setCustomFormulas] =
     useState<Record<string, CustomDeductionOverrides>>(() =>
-      initialProjectId
-        ? loadLocalProjectFormulas(initialProjectId)
-        : loadDraftFormulas()
+      loadLocalCustomerOrProjectFormulas(
+        selectedCustomer?.id ?? null,
+        initialProjectId ?? null
+      )
     )
 
   useEffect(() => {
@@ -372,17 +377,17 @@ function Measurements({
     const activeId = currentOrderId || initialProjectId || null
     const syncFormulas = () => {
       setCustomFormulas(
-        activeId ? loadLocalProjectFormulas(activeId) : loadDraftFormulas()
+        loadLocalCustomerOrProjectFormulas(activeCustomerId, activeId)
       )
     }
 
-    if (activeId) {
-      void fetchProjectFormulas(activeId).then((formulas) => {
+    void fetchCustomerOrProjectFormulas(activeCustomerId, activeId).then(
+      (formulas) => {
         if (!cancelled) {
           setCustomFormulas(formulas)
         }
-      })
-    }
+      }
+    )
 
     window.addEventListener('storage', syncFormulas)
     window.addEventListener('focus', syncFormulas)
@@ -394,7 +399,7 @@ function Measurements({
       window.removeEventListener('focus', syncFormulas)
       window.removeEventListener('ls-formulas-updated', syncFormulas)
     }
-  }, [currentOrderId, initialProjectId])
+  }, [activeCustomerId, currentOrderId, initialProjectId])
 
   const onProjectActiveRef = useRef(onProjectActive)
   useEffect(() => {
@@ -438,6 +443,9 @@ function Measurements({
         if (cancelled || !project) return
 
         setCurrentOrderId(project.id)
+        if (project.customer_id) {
+          setLoadedCustomerId(project.customer_id)
+        }
         onProjectActiveRef.current?.(project.id)
         setProjectName(project.name)
         pendingProjectNameRef.current = project.name
@@ -542,10 +550,22 @@ function Measurements({
 
     const syncBackendProjects = async () => {
       try {
-        const response = await authFetch(apiUrl('/projects/'))
-        if (!response.ok) return
+        const [projResponse, custResponse] = await Promise.all([
+          authFetch(apiUrl('/projects/')),
+          authFetch(apiUrl('/customers/')),
+        ])
+        if (!projResponse.ok) return
 
-        const backendProjects: BackendProject[] = await response.json()
+        const backendProjects: BackendProject[] = await projResponse.json()
+        const customerMap = new Map<string, Customer>()
+        if (custResponse.ok) {
+          const backendCustomers: Customer[] = await custResponse.json()
+          if (Array.isArray(backendCustomers)) {
+            for (const c of backendCustomers) {
+              customerMap.set(c.id, c)
+            }
+          }
+        }
         if (cancelled || !Array.isArray(backendProjects)) return
 
         if (backendProjects.length > 0) {
@@ -558,6 +578,9 @@ function Measurements({
 
             for (const project of backendProjects) {
               if (existingIds.has(project.id)) continue
+              const projCustomer = project.customer_id
+                ? customerMap.get(project.customer_id)
+                : undefined
 
               newOrders.push({
                 id: project.id,
@@ -566,8 +589,8 @@ function Measurements({
                   generateProjectSerialNumber(
                     previousOrders.map((order) => order.serialNumber)
                   ),
-                customerName: selectedCustomer?.name || 'Customer',
-                customerPhone: selectedCustomer?.phone || '',
+                customerName: projCustomer?.name || 'Customer',
+                customerPhone: projCustomer?.phone || '',
                 orderDate: getTodayDate(),
                 projectName: project.name,
                 defaultTolerance:
@@ -599,7 +622,7 @@ function Measurements({
     return () => {
       cancelled = true
     }
-  }, [selectedCustomer?.name, selectedCustomer?.phone])
+  }, [])
 
   const getNextRowId = (currentRows: MeasurementRow[]) =>
     Math.max(0, ...currentRows.map((row) => row.id)) + 1
@@ -843,24 +866,12 @@ function Measurements({
   }
 
   const getOrCreateCustomerId = async (): Promise<string | null> => {
-    if (selectedCustomer?.id) return selectedCustomer.id
+    if (activeCustomerId) return activeCustomerId
 
     const name = customerName.trim()
     if (!name) return null
 
     try {
-      const listResponse = await authFetch(apiUrl('/customers/'))
-
-      if (listResponse.ok) {
-        const customers: Customer[] = await listResponse.json()
-
-        const match = customers.find(
-          (customer) => customer.name.toLowerCase() === name.toLowerCase()
-        )
-
-        if (match) return match.id
-      }
-
       const createResponse = await authFetch(apiUrl('/customers/'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -874,10 +885,11 @@ function Measurements({
 
       if (createResponse.ok) {
         const created: Customer = await createResponse.json()
+        setLoadedCustomerId(created.id)
         return created.id
       }
     } catch (error) {
-      console.error('Error finding/creating customer on backend:', error)
+      console.error('Error creating customer on backend:', error)
     }
 
     return null
@@ -903,6 +915,7 @@ function Measurements({
     orderData: ReturnType<typeof getCurrentOrderData>
   ): Promise<{
     id: string
+    customerId: string
     serialNumber: string
     projectName: string
     rows: MeasurementRow[]
@@ -1065,6 +1078,7 @@ function Measurements({
 
       return {
         id: projectId,
+        customerId,
         serialNumber: projectSerial,
         projectName: internalProjectName,
         rows: savedRows,
@@ -1115,7 +1129,11 @@ function Measurements({
 
       if (saveOrdersToStorage([...savedOrders, orderToSave])) {
         if (Object.keys(customFormulas).length > 0) {
-          await saveProjectFormulasToServer(orderToSave.id, customFormulas)
+          await saveCustomerOrProjectFormulasToServer(
+            syncResult.customerId,
+            orderToSave.id,
+            customFormulas
+          )
           clearDraftFormulas()
         }
         setCurrentOrderId(orderToSave.id)
@@ -1213,8 +1231,16 @@ function Measurements({
     setToUnit('mm')
     setRows([createEmptyRow(1, 5, true, identificationColors[0])])
     setCurrentOrderId(null)
-    clearDraftFormulas()
-    setCustomFormulas({})
+    if (selectedCustomer?.id) {
+      setLoadedCustomerId(selectedCustomer.id)
+      void fetchCustomerOrProjectFormulas(selectedCustomer.id, null).then(
+        setCustomFormulas
+      )
+    } else {
+      setLoadedCustomerId(null)
+      clearDraftFormulas()
+      setCustomFormulas({})
+    }
     onProjectActive?.(null)
 
     window.scrollTo({ top: 0, behavior: 'smooth' })
