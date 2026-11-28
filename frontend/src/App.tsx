@@ -179,6 +179,7 @@ function App() {
           />
         ) : activePage === 'settings' ? (
           <Settings
+            key={activeFormulaProjectId || 'new-order'}
             language={language}
             selectedProjectId={activeFormulaProjectId}
             selectedCustomer={selectedCustomer}

@@ -82,14 +82,19 @@ export function convertMeasurementsToCalculationResults(
     } else if (row.modelId.startsWith('66-')) {
       windowType = 'sliding';
       profileSeries = '66mm';
-      frameType = row.modelId === '66-3' ? '3-track' : '2-track';
+      frameType =
+        row.modelId === '66-2.5'
+          ? '2.5-track'
+          : row.modelId === '66-3'
+          ? '3-track'
+          : '2-track';
     } else if (row.modelId.startsWith('85-')) {
       windowType = 'sliding';
       profileSeries = '85mm';
       frameType =
         row.modelId === '85-2.5'
           ? '2.5-track'
-          : row.modelId === '85-3'
+          : row.modelId === '85-3' || row.modelId === '85-3-mesh'
           ? '3-track'
           : '2-track';
     } else if (row.modelId.startsWith('open-')) {

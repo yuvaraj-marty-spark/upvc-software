@@ -1,4 +1,5 @@
 
+import json
 import uuid
 from uuid import uuid4
 
@@ -12,6 +13,7 @@ from app.models.customer import Customer
 from app.models.measurement import Measurement
 from app.models.project import Project
 from app.models.shop import Shop
+from app.models.shop_setting import ShopFormulaSetting
 from app.schemas.customer import CustomerCreate, CustomerResponse
 
 
@@ -80,9 +82,10 @@ def create_customer(
         else None
     )
 
-    # Find an existing customer by phone or case-insensitive name.
+    # Find an existing active customer by phone or case-insensitive name.
     existing_query = select(Customer).where(
-        Customer.shop_id == shop.id
+        Customer.shop_id == shop.id,
+        Customer.is_active.is_(True),
     )
 
     if cleaned_phone:
@@ -127,7 +130,6 @@ def create_customer(
 
         existing_customer.is_active = True
         db.commit()
-        db.refresh(existing_customer)
 
         return existing_customer
 
@@ -147,7 +149,6 @@ def create_customer(
 
     db.add(customer)
     db.commit()
-    db.refresh(customer)
 
     return customer
 
@@ -254,7 +255,6 @@ def update_customer(
     customer.address = customer_data.address
 
     db.commit()
-    db.refresh(customer)
 
     return customer
 
@@ -340,6 +340,7 @@ def permanently_delete_customer(
         Project.customer_id == customer.id,
         Project.shop_id == shop.id,
     )
+    deleted_proj_keys = {str(pid) for pid in db.scalars(project_ids).all()}
 
     try:
         # Delete measurements before deleting their parent projects.
@@ -357,6 +358,26 @@ def permanently_delete_customer(
                 Project.shop_id == shop.id,
             )
         )
+
+        # Remove any saved formula settings belonging to deleted projects.
+        if deleted_proj_keys:
+            setting = db.scalar(
+                select(ShopFormulaSetting).where(ShopFormulaSetting.shop_id == shop.id)
+            )
+            if setting and setting.formulas_json:
+                try:
+                    data = json.loads(setting.formulas_json)
+                    projects_map = data.get("__projects__") if isinstance(data, dict) else None
+                    if isinstance(projects_map, dict):
+                        changed = False
+                        for key in deleted_proj_keys:
+                            if key in projects_map:
+                                projects_map.pop(key, None)
+                                changed = True
+                        if changed:
+                            setting.formulas_json = json.dumps(data)
+                except ValueError:
+                    pass
 
         # Delete the customer after its dependent records.
         db.delete(customer)

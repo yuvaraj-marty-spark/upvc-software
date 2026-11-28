@@ -17,9 +17,11 @@ export type WindowInputUnit = 'in' | 'cm' | 'mm'
 
 export function resolveWindowLabels(
   rows: WindowIdentityRow[],
-  _fromUnit?: WindowInputUnit,
-  _customFormulas?: Record<string, CustomDeductionOverrides>
+  fromUnit?: WindowInputUnit,
+  customFormulas?: Record<string, CustomDeductionOverrides>
 ): { label: string; serialNo: string }[] {
+  void fromUnit
+  void customFormulas
   if (!rows.length) return []
 
   let nextWindowNumber = 0

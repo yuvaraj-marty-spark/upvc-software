@@ -377,14 +377,11 @@ function Measurements({
     }
 
     if (activeId) {
-      setCustomFormulas(loadLocalProjectFormulas(activeId))
       void fetchProjectFormulas(activeId).then((formulas) => {
         if (!cancelled) {
           setCustomFormulas(formulas)
         }
       })
-    } else {
-      setCustomFormulas(loadDraftFormulas())
     }
 
     window.addEventListener('storage', syncFormulas)
@@ -399,6 +396,11 @@ function Measurements({
     }
   }, [currentOrderId, initialProjectId])
 
+  const onProjectActiveRef = useRef(onProjectActive)
+  useEffect(() => {
+    onProjectActiveRef.current = onProjectActive
+  }, [onProjectActive])
+
   // Keep manually entered customer details, but display the selected
   // customer's latest details whenever a customer is selected.
   const displayedCustomerName = selectedCustomer?.name ?? customerName
@@ -408,7 +410,6 @@ function Measurements({
     if (!initialProjectId && !selectedCustomer?.id) return
 
     let cancelled = false
-    setIsLoadingProject(true)
 
     const loadProject = async () => {
       try {
@@ -427,7 +428,7 @@ function Measurements({
           if (!Array.isArray(customerProjects) || customerProjects.length === 0) {
             if (!cancelled) {
               setCurrentOrderId(null)
-              onProjectActive?.(null)
+              onProjectActiveRef.current?.(null)
             }
             return
           }
@@ -437,7 +438,7 @@ function Measurements({
         if (cancelled || !project) return
 
         setCurrentOrderId(project.id)
-        onProjectActive?.(project.id)
+        onProjectActiveRef.current?.(project.id)
         setProjectName(project.name)
         pendingProjectNameRef.current = project.name
         deletedMeasurementIdsRef.current.clear()

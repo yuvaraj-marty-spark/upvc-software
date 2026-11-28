@@ -109,7 +109,7 @@ def get_dashboard_stats(
         orders_by_month[m_key] += 1
         orders_by_week[w_key] += 1
 
-        if st == "pending":
+        if st in ("pending", "active"):
             pending_by_month[m_key] += 1
 
         windows_detail = [
@@ -186,7 +186,7 @@ def get_dashboard_stats(
         "project_status": status_counts,
         "monthly_pending": {
             "current_month_pending": current_month_pending,
-            "total_pending": status_counts["pending"],
+            "total_pending": status_counts["pending"] + status_counts["active"],
             "history": [
                 {"month": m["month"], "label": m["label"], "pending_count": m["pending_count"]}
                 for m in months_history

@@ -20,7 +20,7 @@ from app.models.passcode_session import PasscodeSession
 from app.models.shop import Shop
 
 ENV_PATH = Path(__file__).resolve().parent.parent.parent.parent / ".env"
-load_dotenv(ENV_PATH, override=True)
+load_dotenv(ENV_PATH, override=False)
 
 SESSION_TIMEOUT_SECONDS = 60
 MAX_FAILED_ATTEMPTS = 5

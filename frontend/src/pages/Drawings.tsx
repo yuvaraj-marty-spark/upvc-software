@@ -162,6 +162,7 @@ export default function Drawings({
   const selectedCustomerIdRef = useRef('')
   const initialProjectResolvedRef = useRef(false)
   const [records, setRecords] = useState<DrawingRecord[]>([])
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const syncFormulas = () => {
@@ -178,7 +179,6 @@ export default function Drawings({
   const [loadingRecords, setLoadingRecords] = useState(false)
   const [customerError, setCustomerError] = useState('')
   const [recordsError, setRecordsError] = useState('')
-  const [refreshKey, setRefreshKey] = useState(0)
   const [page, setPage] = useState(1)
   const [viewIndex, setViewIndex] = useState<number | null>(null)
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)

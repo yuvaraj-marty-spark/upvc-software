@@ -265,54 +265,63 @@ def save_order(
                 detail="Active customer not found.",
             )
 
-        # Check for duplicate name
-        dup = db.scalar(
-            select(Project).where(
+        # Enforce 1 active project serial per customer: if this customer already
+        # has an active project, update it instead of creating a duplicate PROJ-N.
+        existing_customer_project = db.scalar(
+            select(Project)
+            .where(
                 Project.shop_id == shop.id,
                 Project.customer_id == customer.id,
-                Project.name.ilike(cleaned_name),
                 Project.status != "inactive",
             )
+            .order_by(Project.created_at.desc())
+            .limit(1)
         )
-        if dup:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="enter unique name",
+
+        if existing_customer_project is not None:
+            project = existing_customer_project
+            project.name = cleaned_name
+            project.description = body.project.description
+            project.input_unit = body.project.input_unit
+            project.output_unit = body.project.output_unit
+            project.default_tolerance_mm = body.project.default_tolerance_mm
+            project.default_apply_tolerance = body.project.default_apply_tolerance
+            if body.project.status:
+                project.status = body.project.status
+        else:
+            # Custom or auto serial
+            custom_serial = (
+                body.project.serial_number.strip().upper()
+                if body.project.serial_number and body.project.serial_number.strip()
+                else None
             )
+            if custom_serial:
+                if db.scalar(
+                    select(Project).where(
+                        Project.shop_id == shop.id,
+                        Project.serial_number == custom_serial,
+                    )
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Serial number {custom_serial} already exists in your shop.",
+                    )
 
-        # Custom or auto serial
-        custom_serial = (
-            body.project.serial_number.strip().upper()
-            if body.project.serial_number and body.project.serial_number.strip()
-            else None
-        )
-        if custom_serial:
-            if db.scalar(
-                select(Project).where(
-                    Project.shop_id == shop.id,
-                    Project.serial_number == custom_serial,
-                )
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Serial number {custom_serial} already exists in your shop.",
-                )
-
-        serial_val = custom_serial or generate_unique_project_serial_number(db, shop)
-        project = Project(
-            shop_id=shop.id,
-            customer_id=customer.id,
-            serial_number=serial_val,
-            name=cleaned_name,
-            description=body.project.description,
-            status=body.project.status or "active",
-            input_unit=body.project.input_unit,
-            output_unit=body.project.output_unit,
-            default_tolerance_mm=body.project.default_tolerance_mm,
-            default_apply_tolerance=body.project.default_apply_tolerance,
-        )
-        db.add(project)
-        db.flush()  # assign project.id without committing
+            serial_val = custom_serial or generate_unique_project_serial_number(db, shop)
+            project = Project(
+                shop_id=shop.id,
+                customer_id=customer.id,
+                serial_number=serial_val,
+                name=cleaned_name,
+                description=body.project.description,
+                status=body.project.status or "active",
+                input_unit=body.project.input_unit,
+                output_unit=body.project.output_unit,
+                default_tolerance_mm=body.project.default_tolerance_mm,
+                default_apply_tolerance=body.project.default_apply_tolerance,
+            )
+            db.add(project)
+            db.flush()  # assign project.id without committing
 
     # --- 3. Batch-sync measurements (same transaction) ---
     existing_measurements = list(

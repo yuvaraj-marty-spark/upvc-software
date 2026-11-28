@@ -152,7 +152,6 @@ export default function Dashboard({
   }
 
   const fetchStats = async (isManual = false) => {
-    if (isManual) setRefreshing(true)
     try {
       const res = await authFetch(apiUrl('/dashboard/stats'))
       if (res.ok) {
@@ -164,19 +163,44 @@ export default function Dashboard({
       console.warn('Backend offline or not reachable, loading stats from local storage fallback:', err)
     } finally {
       setLoading(false)
-      setRefreshing(false)
+      if (isManual) setRefreshing(false)
+    }
+
+    type FallbackRow = {
+      id?: string | number
+      variantLetter?: string
+      isFinished?: boolean
+      status?: string
+      height?: string | number
+      width?: string | number
+      modelId?: string
+      glassType?: string
+      identificationColor?: string
+    }
+    type FallbackOrder = {
+      id?: string
+      projectName?: string
+      customerName?: string
+      customerId?: string
+      customerPhone?: string
+      serialNumber?: string
+      orderDate?: string
+      fromUnit?: string
+      rows?: FallbackRow[]
     }
 
     // Client-side fallback from saved orders for zero-crash offline/static deployment
     try {
       const stored = localStorage.getItem('ls-interiors-saved-orders')
       if (stored) {
-        const orders = JSON.parse(stored)
+        const orders: unknown = JSON.parse(stored)
         if (Array.isArray(orders) && orders.length > 0) {
-          const summaries: ProjectWindowSummary[] = orders.map((o: any, idx: number) => {
+          const summaries: ProjectWindowSummary[] = (orders as FallbackOrder[]).map((o, idx) => {
             const rows = o.rows || []
             const total = rows.length
-            const finished = rows.filter((r: any) => r.isFinished).length
+            const finished = rows.filter(
+              (r) => Boolean(r.isFinished) || r.status === 'finished'
+            ).length
             const pending = total - finished
             const pct = total > 0 ? Math.round((finished / total) * 1000) / 10 : 0
             const status = total > 0 && finished === total ? 'completed' : 'pending'
@@ -194,12 +218,17 @@ export default function Dashboard({
               not_finished_windows: pending,
               pending_windows: pending,
               completion_pct: pct,
-              windows: rows.map((r: any, wIdx: number) => ({
-                id: r.id || `win-${wIdx + 1}`,
-                label: r.label || o.windowLabels?.[wIdx] || `W${wIdx + 1}`,
-                status: r.isFinished ? 'finished' : 'pending',
-                specification: `${r.height || 0}" × ${r.width || 0}"`,
-                model: r.modelId || 'Sliding Window',
+              windows: rows.map((r, wIdx) => ({
+                id: String(r.id || `win-${wIdx + 1}`),
+                row_order: wIdx + 1,
+                model_id: r.modelId || null,
+                variant_letter: r.variantLetter || '',
+                height: r.height !== undefined && r.height !== '' ? Number(r.height) : null,
+                width: r.width !== undefined && r.width !== '' ? Number(r.width) : null,
+                input_unit: o.fromUnit || 'in',
+                glass_type: r.glassType || null,
+                status: r.isFinished || r.status === 'finished' ? 'finished' : 'pending',
+                identification_color: r.identificationColor || '#FDE68A',
               })),
             }
           })
@@ -238,7 +267,7 @@ export default function Dashboard({
   }
 
   useEffect(() => {
-    fetchStats()
+    void Promise.resolve().then(() => fetchStats())
   }, [])
 
   // Toggle single window status
@@ -436,7 +465,10 @@ export default function Dashboard({
           <button
             type="button"
             className="dashboard-btn dashboard-btn-outline"
-            onClick={() => fetchStats(true)}
+            onClick={() => {
+              setRefreshing(true)
+              void fetchStats(true)
+            }}
             disabled={refreshing}
           >
             <span className={refreshing ? 'spin-icon' : ''}>⟳</span>

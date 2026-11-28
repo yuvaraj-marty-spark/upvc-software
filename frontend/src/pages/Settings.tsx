@@ -414,8 +414,11 @@ export default function Settings({
   const latestFormulasRef = useRef(customFormulas)
   const latestProjectIdRef = useRef(selectedProjectId)
   const hasPendingSyncRef = useRef(false)
-  latestFormulasRef.current = customFormulas
-  latestProjectIdRef.current = selectedProjectId
+
+  useEffect(() => {
+    latestFormulasRef.current = customFormulas
+    latestProjectIdRef.current = selectedProjectId
+  }, [customFormulas, selectedProjectId])
 
   const activePreset = FORMULA_PRESETS[selectedModel]
   const activeOverrides = customFormulas[selectedModel] || {}
@@ -431,10 +434,8 @@ export default function Settings({
   useEffect(() => {
     let cancelled = false
     if (!selectedProjectId) {
-      setCustomFormulas(loadDraftFormulas())
       return
     }
-    setCustomFormulas(loadLocalProjectFormulas(selectedProjectId))
     const loadFromBackend = async () => {
       const formulas = await fetchProjectFormulas(selectedProjectId)
       if (!cancelled) {
