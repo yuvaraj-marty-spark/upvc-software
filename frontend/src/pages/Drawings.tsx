@@ -109,10 +109,12 @@ function getModelType(modelId: string): string {
   return model.category.charAt(0).toUpperCase() + model.category.slice(1)
 }
 
-function getStatusLabel(status?: string | null): string {
-  if (!status || status === 'pending') return 'Pending'
-  if (status === 'finished' || status === 'completed') return 'Completed'
-  if (status === 'in_progress') return 'In Progress'
+function getStatusLabel(status?: string | null, isTamil = false): string {
+  if (!status || status === 'pending') return isTamil ? 'நிலுவை' : 'Pending'
+  if (status === 'finished' || status === 'completed') {
+    return isTamil ? 'முடிந்தது' : 'Completed'
+  }
+  if (status === 'in_progress') return isTamil ? 'செயலில்' : 'In Progress'
 
   return status.replaceAll('_', ' ')
 }
@@ -512,8 +514,12 @@ export default function Drawings({
           ) : (
             <p>
               {customerError
-                ? 'Unable to display customers.'
-                : 'No customers match this name.'}
+                ? isTamil
+                  ? 'வாடிக்கையாளர்களைக் காட்ட முடியவில்லை.'
+                  : 'Unable to display customers.'
+                : isTamil
+                  ? 'இந்தப் பெயருடன் வாடிக்கையாளர்கள் இல்லை.'
+                  : 'No customers match this name.'}
             </p>
           )}
         </div>
@@ -521,30 +527,36 @@ export default function Drawings({
 
       {customerError && (
         <p className="drawings-error" role="alert">
-          Unable to load customers: {customerError}
+          {isTamil ? 'வாடிக்கையாளர்களை ஏற்ற முடியவில்லை: ' : 'Unable to load customers: '}
+          {customerError}
         </p>
       )}
 
       {selectedCustomer && (
-        <section className="drawings-customer-summary" aria-label="Selected customer">
+        <section
+          className="drawings-customer-summary"
+          aria-label={isTamil ? 'தேர்ந்தெடுக்கப்பட்ட வாடிக்கையாளர்' : 'Selected customer'}
+        >
           <UserRound aria-hidden="true" size={27} />
           <span>
-            Customer: <strong>{selectedCustomer.name}</strong>
+            {isTamil ? 'வாடிக்கையாளர்:' : 'Customer:'} <strong>{selectedCustomer.name}</strong>
           </span>
           <span className="drawings-summary-divider" aria-hidden="true" />
           <span>
-            <strong>Phone:</strong> {selectedCustomer.phone || ''}
+            <strong>{isTamil ? 'தொலைபேசி:' : 'Phone:'}</strong> {selectedCustomer.phone || ''}
           </span>
           <span className="drawings-summary-divider" aria-hidden="true" />
           <span>
-            <strong>Serial No:</strong> {selectedCustomer.serial_number || ''}
+            <strong>{isTamil ? 'வரிசை எண்:' : 'Serial No:'}</strong>{' '}
+            {selectedCustomer.serial_number || ''}
           </span>
         </section>
       )}
 
       {recordsError && (
         <p className="drawings-error" role="alert">
-          Unable to load saved measurements: {recordsError}
+          {isTamil ? 'சேமித்த அளவீடுகளை ஏற்ற முடியவில்லை: ' : 'Unable to load saved measurements: '}
+          {recordsError}
         </p>
       )}
 
@@ -556,16 +568,16 @@ export default function Drawings({
                 <thead>
                   <tr>
                     <th scope="col">#</th>
-                    <th scope="col">Window Number</th>
-                    <th scope="col">Model Name</th>
-                    <th scope="col">Model Type</th>
-                    <th scope="col">Width (mm)</th>
-                    <th scope="col">Height (mm)</th>
-                    {showMeshColumn && <th scope="col">Mesh</th>}
-                    {showMullionColumn && <th scope="col">Mullion</th>}
-                    <th scope="col">Glass Type</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Actions</th>
+                    <th scope="col">{isTamil ? 'ஜன்னல் எண்' : 'Window Number'}</th>
+                    <th scope="col">{isTamil ? 'மாடல் பெயர்' : 'Model Name'}</th>
+                    <th scope="col">{isTamil ? 'மாடல் வகை' : 'Model Type'}</th>
+                    <th scope="col">{isTamil ? 'அகலம் (mm)' : 'Width (mm)'}</th>
+                    <th scope="col">{isTamil ? 'உயரம் (mm)' : 'Height (mm)'}</th>
+                    {showMeshColumn && <th scope="col">{isTamil ? 'கொசு வலை' : 'Mesh'}</th>}
+                    {showMullionColumn && <th scope="col">{isTamil ? 'முல்லியன்' : 'Mullion'}</th>}
+                    <th scope="col">{isTamil ? 'கண்ணாடி வகை' : 'Glass Type'}</th>
+                    <th scope="col">{isTamil ? 'நிலை' : 'Status'}</th>
+                    <th scope="col">{isTamil ? 'செயல்கள்' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -579,7 +591,9 @@ export default function Drawings({
                         }
                         className="drawings-table-message"
                       >
-                        Loading customer measurements...
+                        {isTamil
+                          ? 'வாடிக்கையாளர் அளவீடுகள் ஏற்றப்படுகின்றன...'
+                          : 'Loading customer measurements...'}
                       </td>
                     </tr>
                   ) : records.length === 0 ? (
@@ -592,7 +606,9 @@ export default function Drawings({
                         }
                         className="drawings-table-message"
                       >
-                        No saved window measurements found for this customer.
+                        {isTamil
+                          ? 'இந்த வாடிக்கையாளருக்கு சேமித்த ஜன்னல் அளவீடுகள் இல்லை.'
+                          : 'No saved window measurements found for this customer.'}
                       </td>
                     </tr>
                   ) : (
@@ -650,14 +666,14 @@ export default function Drawings({
                                 : ''}
                             </td>
                           )}
-                          <td />
+                          <td>{record.measurement.glass_type || ''}</td>
                           <td>
                             <span
                               className={`drawings-status ${getStatusClass(
                                 record.measurement.status,
                               )}`}
                             >
-                              {getStatusLabel(record.measurement.status)}
+                              {getStatusLabel(record.measurement.status, isTamil)}
                             </span>
                           </td>
                           <td>
@@ -666,10 +682,14 @@ export default function Drawings({
                                 type="button"
                                 className="drawings-row-button"
                                 onClick={() => startView(recordIndex)}
-                                aria-label={`View ${record.windowLabel}`}
+                                aria-label={
+                                  isTamil
+                                    ? `${record.windowLabel} பார்க்கவும்`
+                                    : `View ${record.windowLabel}`
+                                }
                               >
                                 <Eye aria-hidden="true" size={15} />
-                                View
+                                {isTamil ? 'பார்க்க' : 'View'}
                               </button>
                               <button
                                 type="button"
@@ -677,7 +697,11 @@ export default function Drawings({
                                 onClick={() =>
                                   downloadPdf('workshop', [record.result], record.project)
                                 }
-                                aria-label={`Download workshop PDF for ${record.windowLabel}`}
+                                aria-label={
+                                  isTamil
+                                    ? `${record.windowLabel} பட்டறை PDF பதிவிறக்கு`
+                                    : `Download workshop PDF for ${record.windowLabel}`
+                                }
                               >
                                 <Download aria-hidden="true" size={15} />
                                 PDF
@@ -692,9 +716,13 @@ export default function Drawings({
                                       selectedCustomer,
                                     )
                                   }
-                                  aria-label={`Edit ${record.windowLabel} measurements`}
+                                  aria-label={
+                                    isTamil
+                                      ? `${record.windowLabel} அளவீடுகளைத் திருத்து`
+                                      : `Edit ${record.windowLabel} measurements`
+                                  }
                                 >
-                                  Edit
+                                  {isTamil ? 'திருத்து' : 'Edit'}
                                 </button>
                               )}
                             </div>
@@ -709,15 +737,19 @@ export default function Drawings({
 
             <footer className="drawings-table-footer">
               <span>
-                Showing {firstVisibleRecord} to {lastVisibleRecord} of{' '}
-                {records.length} entries
+                {isTamil
+                  ? `${records.length} பதிவுகளில் ${firstVisibleRecord} முதல் ${lastVisibleRecord} வரை`
+                  : `Showing ${firstVisibleRecord} to ${lastVisibleRecord} of ${records.length} entries`}
               </span>
-              <div className="drawings-pagination" aria-label="Table pagination">
+              <div
+                className="drawings-pagination"
+                aria-label={isTamil ? 'பக்க வழிசெலுத்தல்' : 'Table pagination'}
+              >
                 <button
                   type="button"
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={page <= 1}
-                  aria-label="Previous page"
+                  aria-label={isTamil ? 'முந்தைய பக்கம்' : 'Previous page'}
                 >
                   ‹
                 </button>
@@ -728,7 +760,7 @@ export default function Drawings({
                     setPage((current) => Math.min(totalPages, current + 1))
                   }
                   disabled={page >= totalPages}
-                  aria-label="Next page"
+                  aria-label={isTamil ? 'அடுத்த பக்கம்' : 'Next page'}
                 >
                   ›
                 </button>
@@ -746,8 +778,12 @@ export default function Drawings({
             <article className="drawings-download-card">
               <FileSpreadsheet aria-hidden="true" size={48} />
               <div className="drawings-download-content">
-                <h3>Workshop PDF</h3>
-                <p>Download workshop order with full details</p>
+                <h3>{isTamil ? 'பட்டறை PDF' : 'Workshop PDF'}</h3>
+                <p>
+                  {isTamil
+                    ? 'முழு விவரங்களுடன் பட்டறை ஆர்டர் பதிவிறக்கு'
+                    : 'Download workshop order with full details'}
+                </p>
                 <button
                   type="button"
                   onClick={() =>
@@ -756,15 +792,19 @@ export default function Drawings({
                   disabled={records.length === 0 || loadingRecords}
                 >
                   <Download aria-hidden="true" size={17} />
-                  Download Workshop PDF
+                  {isTamil ? 'பட்டறை PDF பதிவிறக்கு' : 'Download Workshop PDF'}
                 </button>
               </div>
             </article>
             <article className="drawings-download-card">
               <Glasses aria-hidden="true" size={48} />
               <div className="drawings-download-content">
-                <h3>Glass Factory PDF</h3>
-                <p>Download glass specification</p>
+                <h3>{isTamil ? 'கிளாஸ் தொழிற்சாலை PDF' : 'Glass Factory PDF'}</h3>
+                <p>
+                  {isTamil
+                    ? 'கண்ணாடி விவரக்குறிப்பு பதிவிறக்கு'
+                    : 'Download glass specification'}
+                </p>
                 <button
                   type="button"
                   onClick={() =>
@@ -773,7 +813,7 @@ export default function Drawings({
                   disabled={records.length === 0 || loadingRecords}
                 >
                   <Download aria-hidden="true" size={17} />
-                  Download Glass Factory PDF
+                  {isTamil ? 'கிளாஸ் PDF பதிவிறக்கு' : 'Download Glass Factory PDF'}
                 </button>
               </div>
             </article>
@@ -785,10 +825,11 @@ export default function Drawings({
         <section className="drawings-cad-view">
           <div className="drawings-cad-heading">
             <h3>
-              Window drawing: {records[viewIndex]?.windowLabel || ''}
+              {isTamil ? 'ஜன்னல் வரைபடம்:' : 'Window drawing:'}{' '}
+              {records[viewIndex]?.windowLabel || ''}
             </h3>
             <button type="button" onClick={() => setViewIndex(null)}>
-              Back to windows
+              {isTamil ? 'ஜன்னல்களுக்குத் திரும்பு' : 'Back to windows'}
             </button>
           </div>
           <WindowVisualizer2D

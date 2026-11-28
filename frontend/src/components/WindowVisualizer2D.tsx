@@ -1445,7 +1445,7 @@ export const WindowVisualizer2D: React.FC<WindowVisualizer2DProps> = ({
           <div className="visualizer-spec-card">
             <span className="visualizer-spec-label">{t('இன்டர்லாக்', 'Interlock')}</span>
             <span className="visualizer-spec-value">{currentResult.interlockMM} mm</span>
-            <span className="visualizer-spec-sub">Woolpile Brush</span>
+            <span className="visualizer-spec-sub">{t('உல்பைல் பிரஷ்', 'Woolpile Brush')}</span>
           </div>
         )}
 

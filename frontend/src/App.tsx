@@ -23,7 +23,22 @@ function App() {
     getSessionToken() ? getSessionLabel() || 'Active User' : null
   )
   const [authNotice, setAuthNotice] = useState('')
-  const [language, setLanguage] = useState<Language>('en')
+  const [language, setLanguage] = useState<Language>(() => {
+    try {
+      return localStorage.getItem('ls-interiors-language') === 'ta' ? 'ta' : 'en'
+    } catch {
+      return 'en'
+    }
+  })
+
+  function handleLanguageChange(nextLanguage: Language) {
+    setLanguage(nextLanguage)
+    try {
+      localStorage.setItem('ls-interiors-language', nextLanguage)
+    } catch {
+      // Ignore storage errors
+    }
+  }
   const [activePage, setActivePage] = useState<PageKey>('dashboard')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
@@ -104,7 +119,7 @@ function App() {
     <div className="app-shell">
       <Sidebar
         language={language}
-        onLanguageChange={setLanguage}
+        onLanguageChange={handleLanguageChange}
         activePage={activePage}
         onNavigate={setActivePage}
         sessionLabel={sessionLabel}

@@ -257,7 +257,12 @@ function Customers({
   function validateCustomerPhone(phone: string): boolean {
     if (!phone) return true
     if (!/^\d{10}$/.test(phone)) {
-      setError('Phone number must contain exactly 10 digits.')
+      setError(
+        t(
+          'Phone number must contain exactly 10 digits.',
+          'தொலைபேசி எண் சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்.',
+        ),
+      )
       return false
     }
     return true
@@ -269,7 +274,12 @@ function Customers({
     event.preventDefault()
     if (!validateCustomerPhone(form.phone.trim())) return
     if (!form.serialNumber.trim()) {
-      setError('Customer serial number is required.')
+      setError(
+        t(
+          'Customer serial number is required.',
+          'வாடிக்கையாளர் வரிசை எண் அவசியம்.',
+        ),
+      )
       return
     }
 
@@ -295,7 +305,10 @@ function Customers({
 
       if (!response.ok) {
         const result = await response.json().catch(() => null)
-        throw new Error(result?.detail || 'Unable to add customer.')
+        throw new Error(
+          result?.detail ||
+            t('Unable to add customer.', 'வாடிக்கையாளரைச் சேர்க்க முடியவில்லை.'),
+        )
       }
 
       const createdCustomer: Customer = await response.json()
@@ -306,7 +319,7 @@ function Customers({
       setError(
         createError instanceof Error
           ? createError.message
-          : 'Unable to add customer.',
+          : t('Unable to add customer.', 'வாடிக்கையாளரைச் சேர்க்க முடியவில்லை.'),
       )
     } finally {
       setSaving(false)
@@ -321,7 +334,12 @@ function Customers({
     if (!editingCustomer) return
     if (!validateCustomerPhone(form.phone.trim())) return
     if (!form.serialNumber.trim()) {
-      setError('Customer serial number is required.')
+      setError(
+        t(
+          'Customer serial number is required.',
+          'வாடிக்கையாளர் வரிசை எண் அவசியம்.',
+        ),
+      )
       return
     }
 
@@ -352,7 +370,8 @@ function Customers({
         const result = await response.json()
 
         throw new Error(
-          result.detail || 'Unable to update customer.',
+          result.detail ||
+            t('Unable to update customer.', 'வாடிக்கையாளரைப் புதுப்பிக்க முடியவில்லை.'),
         )
       }
 
@@ -366,7 +385,7 @@ function Customers({
       setError(
         updateError instanceof Error
           ? updateError.message
-          : 'Unable to update customer.',
+          : t('Unable to update customer.', 'வாடிக்கையாளரைப் புதுப்பிக்க முடியவில்லை.'),
       )
     } finally {
       setSaving(false)
@@ -376,7 +395,7 @@ function Customers({
   async function deleteCustomer(customer: Customer) {
     const confirmed = window.confirm(
       isTamil
-        ? `"${customer.name}" à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ˆ Delete à®šà¯†à®¯à¯à®¯à®µà®¾?`
+        ? `"${customer.name}" வாடிக்கையாளரை நீக்கப்பட்ட பட்டியலுக்கு மாற்றவா? தொடர்புடைய பதிவுகள் பாதுகாக்கப்பட்டு மீட்டெடுக்க முடியும்.`
         : `Move "${customer.name}" to Deleted Customers? Their associated records will be retained and can be restored.`,
     )
 
@@ -394,7 +413,8 @@ function Customers({
       if (!response.ok) {
         const result = await response.json().catch(() => null)
         throw new Error(
-          result?.detail || 'Unable to delete customer.',
+          result?.detail ||
+            t('Unable to delete customer.', 'வாடிக்கையாளரை நீக்க முடியவில்லை.'),
         )
       }
 
@@ -411,7 +431,7 @@ function Customers({
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Unable to delete customer.',
+          : t('Unable to delete customer.', 'வாடிக்கையாளரை நீக்க முடியவில்லை.'),
       )
     } finally {
       setSaving(false)
@@ -424,7 +444,9 @@ function Customers({
     if (targets.length === 0) return
 
     const confirmed = window.confirm(
-      `Move ${targets.length} selected customer(s) to Deleted Customers? Their associated records will be retained.`,
+      isTamil
+        ? `தேர்ந்தெடுத்த ${targets.length} வாடிக்கையாளர்களை நீக்கப்பட்ட பட்டியலுக்கு மாற்றவா?`
+        : `Move ${targets.length} selected customer(s) to Deleted Customers? Their associated records will be retained.`,
     )
 
     if (!confirmed) return
@@ -443,7 +465,10 @@ function Customers({
           const result = await response.json().catch(() => null)
           throw new Error(
             result?.detail ||
-              `Unable to delete ${customer.name}.`,
+              t(
+                `Unable to delete ${customer.name}.`,
+                `${customer.name} நீக்க முடியவில்லை.`,
+              ),
           )
         }
       }
@@ -463,7 +488,10 @@ function Customers({
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Unable to delete selected customers.',
+          : t(
+              'Unable to delete selected customers.',
+              'தேர்ந்தெடுத்த வாடிக்கையாளர்களை நீக்க முடியவில்லை.',
+            ),
       )
       await loadData()
     } finally {
@@ -473,7 +501,9 @@ function Customers({
 
   async function restoreCustomer(customer: Customer) {
     const confirmed = window.confirm(
-      `Restore "${customer.name}" to the active customer list?`,
+      isTamil
+        ? `"${customer.name}" வாடிக்கையாளரை மீண்டும் செயலில் உள்ள பட்டியலில் சேர்க்கவா?`
+        : `Restore "${customer.name}" to the active customer list?`,
     )
 
     if (!confirmed) return
@@ -490,7 +520,8 @@ function Customers({
       if (!response.ok) {
         const result = await response.json().catch(() => null)
         throw new Error(
-          result?.detail || 'Unable to restore customer.',
+          result?.detail ||
+            t('Unable to restore customer.', 'வாடிக்கையாளரை மீட்டெடுக்க முடியவில்லை.'),
         )
       }
 
@@ -503,7 +534,7 @@ function Customers({
       setError(
         restoreError instanceof Error
           ? restoreError.message
-          : 'Unable to restore customer.',
+          : t('Unable to restore customer.', 'வாடிக்கையாளரை மீட்டெடுக்க முடியவில்லை.'),
       )
     } finally {
       setSaving(false)
@@ -516,7 +547,9 @@ function Customers({
     if (targets.length === 0) return
 
     const confirmed = window.confirm(
-      `Restore ${targets.length} selected customer(s)?`,
+      isTamil
+        ? `தேர்ந்தெடுத்த ${targets.length} வாடிக்கையாளர்களை மீட்டெடுக்கவா?`
+        : `Restore ${targets.length} selected customer(s)?`,
     )
 
     if (!confirmed) return
@@ -535,7 +568,10 @@ function Customers({
           const result = await response.json().catch(() => null)
           throw new Error(
             result?.detail ||
-              `Unable to restore ${customer.name}.`,
+              t(
+                `Unable to restore ${customer.name}.`,
+                `${customer.name} மீட்டெடுக்க முடியவில்லை.`,
+              ),
           )
         }
       }
@@ -546,7 +582,10 @@ function Customers({
       setError(
         restoreError instanceof Error
           ? restoreError.message
-          : 'Unable to restore selected customers.',
+          : t(
+              'Unable to restore selected customers.',
+              'தேர்ந்தெடுத்த வாடிக்கையாளர்களை மீட்டெடுக்க முடியவில்லை.',
+            ),
       )
       await loadData()
     } finally {
@@ -558,7 +597,9 @@ function Customers({
     customer: Customer,
   ) {
     const confirmed = window.confirm(
-      `PERMANENTLY DELETE "${customer.name}"?\n\nThis will permanently remove this customer, all associated measurement records. This action cannot be undone.`,
+      isTamil
+        ? `"${customer.name}" வாடிக்கையாளரை நிரந்தரமாக நீக்கவா?\n\nஇவரின் அனைத்து அளவீடு மற்றும் ஆர்டர் பதிவுகளும் நிரந்தரமாக அழிக்கப்படும். இதைத் திரும்பப் பெற முடியாது.`
+        : `PERMANENTLY DELETE "${customer.name}"?\n\nThis will permanently remove this customer, all associated measurement records. This action cannot be undone.`,
     )
 
     if (!confirmed) return
@@ -576,7 +617,10 @@ function Customers({
         const result = await response.json().catch(() => null)
         throw new Error(
           result?.detail ||
-            'Unable to permanently delete customer.',
+            t(
+              'Unable to permanently delete customer.',
+              'வாடிக்கையாளரை நிரந்தரமாக நீக்க முடியவில்லை.',
+            ),
         )
       }
 
@@ -593,7 +637,10 @@ function Customers({
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Unable to permanently delete customer.',
+          : t(
+              'Unable to permanently delete customer.',
+              'வாடிக்கையாளரை நிரந்தரமாக நீக்க முடியவில்லை.',
+            ),
       )
     } finally {
       setSaving(false)
@@ -606,7 +653,9 @@ function Customers({
     if (targets.length === 0) return
 
     const confirmed = window.confirm(
-      `PERMANENTLY DELETE ${targets.length} selected customer(s)?\n\nAll associated measurement records will also be permanently deleted. This action cannot be undone.`,
+      isTamil
+        ? `தேர்ந்தெடுத்த ${targets.length} வாடிக்கையாளர்களை நிரந்தரமாக நீக்கவா?\n\nஅவர்களின் அனைத்து அளவீடு பதிவுகளும் நிரந்தரமாக அழிக்கப்படும்.`
+        : `PERMANENTLY DELETE ${targets.length} selected customer(s)?\n\nAll associated measurement records will also be permanently deleted. This action cannot be undone.`,
     )
 
     if (!confirmed) return
@@ -625,7 +674,10 @@ function Customers({
           const result = await response.json().catch(() => null)
           throw new Error(
             result?.detail ||
-              `Unable to permanently delete ${customer.name}.`,
+              t(
+                `Unable to permanently delete ${customer.name}.`,
+                `${customer.name} நிரந்தரமாக நீக்க முடியவில்லை.`,
+              ),
           )
         }
       }
@@ -645,7 +697,10 @@ function Customers({
       setError(
         deleteError instanceof Error
           ? deleteError.message
-          : 'Unable to permanently delete selected customers.',
+          : t(
+              'Unable to permanently delete selected customers.',
+              'தேர்ந்தெடுத்த வாடிக்கையாளர்களை நிரந்தரமாக நீக்க முடியவில்லை.',
+            ),
       )
       await loadData()
     } finally {
@@ -658,12 +713,12 @@ function Customers({
       <div className="customers-toolbar">
         <div>
           <h2>
-            {t('Customer Management', 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®®à¯‡à®²à®¾à®£à¯à®®à¯ˆ')}
+            {t('Customer Management', 'வாடிக்கையாளர் மேலாண்மை')}
           </h2>
           <p>
             {t(
               'View and manage customer records.',
-              'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³à¯, à®¤à®¿à®Ÿà¯à®Ÿà®™à¯à®•à®³à¯ à®®à®±à¯à®±à¯à®®à¯ à®ªà®¤à®¿à®µà¯à®•à®³à¯ˆ à®¨à®¿à®°à¯à®µà®•à®¿à®•à¯à®•à®µà¯à®®à¯.',
+              'வாடிக்கையாளர்கள், திட்டங்கள் மற்றும் பதிவுகளை நிர்வகிக்கவும்.',
             )}
           </p>
         </div>
@@ -691,14 +746,14 @@ function Customers({
           <div>
             <h3>
               {statusFilter === 'inactive'
-                ? t('Deleted Customers', 'Deleted Customers')
+                ? t('Deleted Customers', 'நீக்கப்பட்ட வாடிக்கையாளர்கள்')
                 : statusFilter === 'active'
-                  ? t('Active Customers', 'Active Customers')
-                  : t('All Customers', 'à®…à®©à¯ˆà®¤à¯à®¤à¯ à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³¯')}
+                  ? t('Active Customers', 'செயலில் உள்ள வாடிக்கையாளர்கள்')
+                  : t('All Customers', 'அனைத்து வாடிக்கையாளர்கள்')}
             </h3>
             <span>
               {filteredCustomers.length}{' '}
-              {t('customers shown', 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³¯')}
+              {t('customers shown', 'வாடிக்கையாளர்கள்')}
             </span>
           </div>
 
@@ -711,7 +766,7 @@ function Customers({
             }}
             disabled={loading || saving}
           >
-            {t('Refresh', 'à®ªà¯à®¤à¯à®ªà¯à®ªà®¿')}
+            {t('Refresh', 'புதுப்பி')}
           </button>
         </div>
 
@@ -729,16 +784,16 @@ function Customers({
             onChange={(event) =>
               setStatusFilter(event.target.value as StatusFilter)
             }
-            aria-label={t('Customer status filter', 'à®¨à®¿à®²à¯ˆ à®µà®Ÿà®¿à®•à®Ÿà¯à®Ÿà®¿')}
+            aria-label={t('Customer status filter', 'நிலை வடிகட்டி')}
           >
             <option value="all">
-              {t('All Customers', 'à®…à®©à¯ˆà®¤à¯à®¤à¯')}
+              {t('All Customers', 'அனைத்தும்')}
             </option>
             <option value="active">
-              {t('Active Customers', 'Active Customers')}
+              {t('Active Customers', 'செயலில் உள்ளவை')}
             </option>
             <option value="inactive">
-              {t('Deleted Customers', 'Deleted Customers')}
+              {t('Deleted Customers', 'நீக்கப்பட்டவை')}
             </option>
           </select>
         </div>
@@ -747,7 +802,7 @@ function Customers({
           <div className="customer-bulk-toolbar">
             <strong>
               {selectedIds.length}{' '}
-              {t('selected', 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®©')}
+              {t('selected', 'தேர்ந்தெடுக்கப்பட்டன')}
             </strong>
 
             <div>
@@ -758,7 +813,7 @@ function Customers({
                   onClick={() => void deleteSelectedCustomers()}
                   disabled={saving}
                 >
-                  {t('Delete Selected', 'Delete Selected')}
+                  {t('Delete Selected', 'தேர்ந்தெடுத்தவற்றை நீக்கு')}
                   {' '}({selectedActiveCustomers.length})
                 </button>
               )}
@@ -771,7 +826,7 @@ function Customers({
                     onClick={() => void restoreSelectedCustomers()}
                     disabled={saving}
                   >
-                    {t('Restore Selected', 'Restore Selected')}
+                    {t('Restore Selected', 'தேர்ந்தெடுத்தவற்றை மீட்டெடு')}
                     {' '}({selectedDeletedCustomers.length})
                   </button>
 
@@ -783,7 +838,7 @@ function Customers({
                     }
                     disabled={saving}
                   >
-                    {t('Permanently Delete Selected', 'Permanently Delete Selected')}
+                    {t('Permanently Delete Selected', 'நிரந்தரமாக நீக்கு')}
                     {' '}({selectedDeletedCustomers.length})
                   </button>
                 </>
@@ -795,7 +850,7 @@ function Customers({
                 onClick={() => setSelectedIds([])}
                 disabled={saving}
               >
-                {t('Clear selection', 'à®¤à¯‡à®°à¯à®µà¯ˆ à®¨à¯€à®•à¯à®•à¯')}
+                {t('Clear selection', 'தேர்வை நீக்கு')}
               </button>
             </div>
           </div>
@@ -803,11 +858,11 @@ function Customers({
 
         {loading ? (
           <p className="customer-empty">
-            {t('Loading customers...', 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³à¯ˆ à®à®±à¯à®±à¯à®•à®¿à®±à®¤à¯...')}
+            {t('Loading customers...', 'வாடிக்கையாளர்கள் ஏற்றப்படுகிறது...')}
           </p>
         ) : filteredCustomers.length === 0 ? (
           <p className="customer-empty">
-            {t('No customers found.', 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³¯ à®‡à®²à¯à®²à¯ˆ.')}
+            {t('No customers found.', 'வாடிக்கையாளர்கள் இல்லை.')}
           </p>
         ) : (
           <div className="customer-table-scroll">
@@ -856,7 +911,7 @@ function Customers({
                                   event.target.checked,
                                 )
                               }
-                              aria-label={`Select ${customer.name}`}
+                              aria-label={t(`Select ${customer.name}`, `${customer.name} தேர்வு செய்`)}
                             />
                             <button
                               type="button"
@@ -875,7 +930,7 @@ function Customers({
                                   onClick={() => openEditForm(customer)}
                                   disabled={saving}
                                 >
-                                  {t('Edit', 'Edit')}
+                                  {t('Edit', 'திருத்து')}
                                 </button>
                                 <button
                                   type="button"
@@ -891,7 +946,7 @@ function Customers({
                                   onClick={() => void deleteCustomer(customer)}
                                   disabled={saving}
                                 >
-                                  {t('Delete', 'Delete')}
+                                  {t('Delete', 'நீக்கு')}
                                 </button>
                               </>
                             ) : (
@@ -902,7 +957,7 @@ function Customers({
                                   onClick={() => void restoreCustomer(customer)}
                                   disabled={saving}
                                 >
-                                  {t('Restore', 'Restore')}
+                                  {t('Restore', 'மீட்டெடு')}
                                 </button>
                                 <button
                                   type="button"
@@ -910,7 +965,7 @@ function Customers({
                                   onClick={() => void permanentlyDeleteCustomer(customer)}
                                   disabled={saving}
                                 >
-                                  {t('Permanently Delete', 'Permanently Delete')}
+                                  {t('Permanently Delete', 'நிரந்தரமாக நீக்கு')}
                                 </button>
                               </>
                             )}
@@ -942,23 +997,23 @@ function Customers({
               className="customer-secondary-button"
               onClick={() => onSelectCustomer(null)}
             >
-              {t('Close Details', 'à®®à¯‚à®Ÿà¯')}
+              {t('Close Details', 'மூடு')}
             </button>
           </div>
 
           <div className="customer-contact-grid">
             <div>
-              <span>{t('Phone', 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿')}</span>
+              <span>{t('Phone', 'தொலைபேசி')}</span>
               <strong>{selectedCustomer.phone || '—'}</strong>
             </div>
 
             <div>
-              <span>{t('Email', 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯')}</span>
+              <span>{t('Email', 'மின்னஞ்சல்')}</span>
               <strong>{selectedCustomer.email || '—'}</strong>
             </div>
 
             <div>
-              <span>{t('Address', 'à®®à¯à®•à®µà®°à®¿')}</span>
+              <span>{t('Address', 'முகவரி')}</span>
               <strong>{selectedCustomer.address || '—'}</strong>
             </div>
 
@@ -990,7 +1045,7 @@ function Customers({
           >
             <div className="customer-details-heading">
               <h3 id="customer-add-title">
-                {t('Add Customer', 'Add Customer')}
+                {t('Add Customer', 'புதிய வாடிக்கையாளர் சேர்க்க')}
               </h3>
               <button
                 type="button"
@@ -1003,7 +1058,7 @@ function Customers({
 
             <form onSubmit={handleCreateCustomer}>
               <label>
-                {t('Customer Name', 'Customer Name')}
+                {t('Customer Name', 'வாடிக்கையாளர் பெயர்')}
                 <input
                   required
                   minLength={2}
@@ -1016,7 +1071,7 @@ function Customers({
               </label>
 
               <label>
-                {t('Phone Number', 'Phone Number')}
+                {t('Phone Number', 'தொலைபேசி எண்')}
                 <input
                   type="tel"
                   inputMode="numeric"
@@ -1028,12 +1083,12 @@ function Customers({
               </label>
 
               <label>
-                {t('Customer Serial Number', 'Customer Serial Number')}
+                {t('Customer Serial Number', 'வாடிக்கையாளர் வரிசை எண்')}
                 <input
                   required
                   maxLength={50}
                   value={form.serialNumber}
-                  placeholder="e.g. CUST-101"
+                  placeholder={t('e.g. CUST-101', 'உ.ம். CUST-101')}
                   onChange={(event) =>
                     setForm({
                       ...form,
@@ -1044,7 +1099,7 @@ function Customers({
               </label>
 
               <label>
-                {t('Email Address', 'Email Address')}
+                {t('Email Address', 'மின்னஞ்சல் முகவரி')}
                 <input
                   type="email"
                   value={form.email}
@@ -1055,7 +1110,7 @@ function Customers({
               </label>
 
               <label>
-                {t('Address', 'Address')}
+                {t('Address', 'முகவரி')}
                 <textarea
                   value={form.address}
                   onChange={(event) =>
@@ -1071,7 +1126,7 @@ function Customers({
                   onClick={closeAddForm}
                   disabled={saving}
                 >
-                  {t('Cancel', 'Cancel')}
+                  {t('Cancel', 'ரத்து செய்')}
                 </button>
                 <button
                   type="submit"
@@ -1079,8 +1134,8 @@ function Customers({
                   disabled={saving}
                 >
                   {saving
-                    ? t('Saving...', 'Saving...')
-                    : t('Add Customer', 'Add Customer')}
+                    ? t('Saving...', 'சேமிக்கிறது...')
+                    : t('Add Customer', 'வாடிக்கையாளரைச் சேர்க்க')}
                 </button>
               </div>
             </form>
@@ -1098,7 +1153,7 @@ function Customers({
           >
             <div className="customer-details-heading">
               <h3 id="customer-edit-title">
-                {t('Edit Customer', 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®µà®¿à®µà®°à®™à¯à®•à®³¯ˆà®¤à¯ à®¤à®¿à®°à¯à®¤à¯à®¤à¯')}
+                {t('Edit Customer', 'வாடிக்கையாளர் விவரங்களைத் திருத்து')}
               </h3>
 
               <button
@@ -1112,7 +1167,7 @@ function Customers({
 
             <form onSubmit={handleUpdateCustomer}>
               <label>
-                {t('Customer Name', 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®ªà¯†à®¯à®°à¯')}
+                {t('Customer Name', 'வாடிக்கையாளர் பெயர்')}
                 <input
                   required
                   minLength={2}
@@ -1128,7 +1183,7 @@ function Customers({
               </label>
 
               <label>
-                {t('Phone Number', 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯')}
+                {t('Phone Number', 'தொலைபேசி எண்')}
                 <input
                   type="tel"
                   inputMode="numeric"
@@ -1140,12 +1195,12 @@ function Customers({
               </label>
 
               <label>
-                {t('Customer Serial Number', 'Customer Serial Number')}
+                {t('Customer Serial Number', 'வாடிக்கையாளர் வரிசை எண்')}
                 <input
                   required
                   maxLength={50}
                   value={form.serialNumber}
-                  placeholder="e.g. CUST-101"
+                  placeholder={t('e.g. CUST-101', 'உ.ம். CUST-101')}
                   onChange={(event) =>
                     setForm({
                       ...form,
@@ -1156,7 +1211,7 @@ function Customers({
               </label>
 
               <label>
-                {t('Email Address', 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿')}
+                {t('Email Address', 'மின்னஞ்சல் முகவரி')}
                 <input
                   type="email"
                   value={form.email}
@@ -1170,7 +1225,7 @@ function Customers({
               </label>
 
               <label>
-                {t('Address', 'à®®à¯à®•à®µà®°à®¿')}
+                {t('Address', 'முகவரி')}
                 <textarea
                   value={form.address}
                   onChange={(event) =>
@@ -1189,7 +1244,7 @@ function Customers({
                   onClick={closeEditForm}
                   disabled={saving}
                 >
-                  {t('Cancel', 'à®°à®¤à¯à®¤à¯ à®šà¯†à®¯à¯')}
+                  {t('Cancel', 'ரத்து செய்')}
                 </button>
 
                 <button
@@ -1198,8 +1253,8 @@ function Customers({
                   disabled={saving}
                 >
                   {saving
-                    ? t('Saving...', 'à®šà¯‡à®®à®¿à®•à¯à®•à®¿à®±à®¤à¯...')
-                    : t('Save Changes', 'à®®à®¾à®±à¯à®±à®™à¯à®•à®³¯ˆà®šà¯ à®šà¯‡à®®à®¿')}
+                    ? t('Saving...', 'சேமிக்கிறது...')
+                    : t('Save Changes', 'மாற்றங்களைச் சேமி')}
                 </button>
               </div>
             </form>

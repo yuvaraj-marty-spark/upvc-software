@@ -121,7 +121,7 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
         <div className="a4-modal-header">
           <h3 className="a4-modal-title">
             <FileSpreadsheet className="w-5 h-5 text-blue-500" />
-            <span>{t('à®…à®¤à®¿à®•à®¾à®°à®ªà¯à®ªà¯‚à®°à¯à®µ A4 PDF à®¤à®¯à®¾à®°à®¿à®ªà¯à®ªà¯ à®®à¯ˆà®¯à®®à¯', 'Official A4 Vector Order Sheet Export')}</span>
+            <span>{t('அதிகாரப்பூர்வ A4 PDF தயாரிப்பு மையம்', 'Official A4 Vector Order Sheet Export')}</span>
           </h3>
 
           <div className="a4-modal-tab-group">
@@ -130,7 +130,7 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
               onClick={() => setSheetType('workshop')}
               className={`a4-modal-tab-btn ${sheetType === 'workshop' ? 'active' : ''}`}
             >
-              ðŸ“‹ {t('à®ªà®Ÿà¯à®Ÿà®±à¯ˆ à®•à®Ÿà¯à®Ÿà®¿à®™à¯ à®¤à®¾à®³à¯', 'Workshop Sheet')}
+              📋 {t('பட்டறை கட்டிங் தாள்', 'Workshop Sheet')}
             </button>
 
             <button
@@ -138,7 +138,7 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
               onClick={() => setSheetType('glass')}
               className={`a4-modal-tab-btn ${sheetType === 'glass' ? 'active' : ''}`}
             >
-              ðŸ«§ {t('à®•à®¿à®³à®¾à®¸à¯ à®†à®°à¯à®Ÿà®°à¯', 'Glass Factory')}
+              🪟 {t('கிளாஸ் ஆர்டர்', 'Glass Factory')}
             </button>
           </div>
 
@@ -161,27 +161,27 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
           {/* Metadata Inputs */}
           <div className="a4-inputs-grid">
             <div className="a4-input-group">
-              <label>{t('à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®ªà¯†à®¯à®°à¯', 'Customer Name')}</label>
+              <label>{t('வாடிக்கையாளர் பெயர்', 'Customer Name')}</label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="e.g. Kishore"
+                placeholder={t('உ.ம். கிஷோர்', 'e.g. Kishore')}
               />
             </div>
 
             <div className="a4-input-group">
-              <label>{t('à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯', 'Phone Number')}</label>
+              <label>{t('தொலைபேசி எண்', 'Phone Number')}</label>
               <input
                 type="text"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="e.g. 9876543210"
+                placeholder={t('உ.ம். 9876543210', 'e.g. 9876543210')}
               />
             </div>
 
             <div className="a4-input-group">
-              <label>{t('à®¤à¯‡à®¤à®¿', 'Order Date')}</label>
+              <label>{t('தேதி', 'Order Date')}</label>
               <input
                 type="text"
                 value={orderDate}
@@ -232,13 +232,13 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
                       }}
                     >
                       LS INTERIORS — {sheetType === 'workshop'
-                        ? 'FABRICATION WORK ORDER'
-                        : 'GLASS FACTORY CUT ORDER'}
+                        ? t('பட்டறை தயாரிப்பு ஆர்டர்', 'FABRICATION WORK ORDER')
+                        : t('கிளாஸ் தொழிற்சாலை கட்டிங் ஆர்டர்', 'GLASS FACTORY CUT ORDER')}
                     </strong>
                   </div>
 
                   <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
-                    Date: {orderDate}
+                    {t('தேதி', 'Date')}: {orderDate}
                   </span>
                 </div>
 
@@ -251,15 +251,15 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
                   }}
                 >
                   <span>
-                    Customer: <strong>{customerName || 'General Customer'}</strong>
+                    {t('வாடிக்கையாளர்', 'Customer')}: <strong>{customerName || t('பொது வாடிக்கையாளர்', 'General Customer')}</strong>
                     {customerPhone ? ` (${customerPhone})` : ''}
                     {projectName
-                      ? ` | Project: ${projectSerial ? `[${projectSerial}] ` : ''}${projectName}`
+                      ? ` | ${t('திட்டம்', 'Project')}: ${projectSerial ? `[${projectSerial}] ` : ''}${projectName}`
                       : ''}
                   </span>
 
                   <span style={{ fontWeight: 600 }}>
-                    {results.length} Windows Total
+                    {results.length} {t('மொத்த ஜன்னல்கள்', 'Windows Total')}
                   </span>
                 </div>
               </div>
@@ -271,69 +271,69 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
                     <thead>
                       <tr>
                         <th rowSpan={2} style={{ width: '40px' }}>
-                          S.No
+                          {t('வ.எண்', 'S.No')}
                         </th>
 
                         <th rowSpan={2} style={{ width: '90px' }}>
-                          Height × Width
-                          <div className="a4-sub-th">Enter in Inches</div>
+                          {t('உயரம் × அகலம்', 'Height × Width')}
+                          <div className="a4-sub-th">{t('அங்குலத்தில்', 'Enter in Inches')}</div>
                         </th>
 
                         <th rowSpan={2} style={{ width: '95px' }}>
-                          Outer Frame (mm)
+                          {t('வெளி சட்டகம் (mm)', 'Outer Frame (mm)')}
                           <div className="a4-sub-th">(H × W)</div>
                         </th>
 
                         <th colSpan={3} style={{ width: '250px' }}>
-                          Model Details
+                          {t('மாடல் விவரம்', 'Model Details')}
                         </th>
 
                         <th colSpan={4} style={{ width: '160px' }}>
-                          Sash Cut (mm)
+                          {t('ஷட்டர் கட்டிங் (mm)', 'Sash Cut (mm)')}
                         </th>
 
                         {showMeshColumn && (
                           <th rowSpan={2} style={{ width: '80px' }}>
-                            Mesh (H × W)
+                            {t('கொசு வலை (H × W)', 'Mesh (H × W)')}
                           </th>
                         )}
 
                         {showMullionColumn && (
                           <th rowSpan={2} style={{ width: '80px' }}>
-                            Mullion (mm)
+                            {t('முல்லியன் (mm)', 'Mullion (mm)')}
                           </th>
                         )}
 
                         <th rowSpan={2} style={{ width: '65px' }}>
-                          Interlock (mm)
+                          {t('இன்டர்லாக் (mm)', 'Interlock (mm)')}
                         </th>
 
                         <th colSpan={3} style={{ width: '140px' }}>
-                          Glass Cut (mm)
+                          {t('கண்ணாடி கட்டிங் (mm)', 'Glass Cut (mm)')}
                         </th>
 
                         <th rowSpan={2} style={{ width: '85px' }}>
-                          Glass Type
+                          {t('கண்ணாடி வகை', 'Glass Type')}
                         </th>
 
                         <th rowSpan={2} style={{ width: '60px' }}>
-                          Status
+                          {t('நிலை', 'Status')}
                         </th>
                       </tr>
 
                       <tr className="a4-sub-heading">
-                        <th style={{ width: '130px' }}>Model Name</th>
-                        <th style={{ width: '60px' }}>Model Type</th>
-                        <th style={{ width: '60px' }}>Material</th>
+                        <th style={{ width: '130px' }}>{t('மாடல் பெயர்', 'Model Name')}</th>
+                        <th style={{ width: '60px' }}>{t('மாடல் வகை', 'Model Type')}</th>
+                        <th style={{ width: '60px' }}>{t('பொருள்', 'Material')}</th>
 
                         <th>H</th>
                         <th>W</th>
-                        <th>H Pcs</th>
-                        <th>W Pcs</th>
+                        <th>{t('உயரம் எண்', 'H Pcs')}</th>
+                        <th>{t('அகலம் எண்', 'W Pcs')}</th>
 
                         <th>H</th>
                         <th>W</th>
-                        <th>Qty</th>
+                        <th>{t('எண்', 'Qty')}</th>
                       </tr>
                     </thead>
 
@@ -506,14 +506,14 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
                   <table className="a4-sheet-table">
                     <thead>
                       <tr>
-                        <th style={{ width: '40px' }}>S.No</th>
-                        <th style={{ width: '70px' }}>Window</th>
-                        <th style={{ width: '100px' }}>Outer Frame (mm)</th>
-                        <th>Glass Height (mm)</th>
-                        <th>Glass Width (mm)</th>
-                        <th style={{ width: '80px' }}>Qty (Pcs)</th>
-                        <th style={{ width: '90px' }}>Total Area</th>
-                        <th>Glass Specification</th>
+                        <th style={{ width: '40px' }}>{t('வ.எண்', 'S.No')}</th>
+                        <th style={{ width: '70px' }}>{t('ஜன்னல்', 'Window')}</th>
+                        <th style={{ width: '100px' }}>{t('வெளி சட்டகம் (mm)', 'Outer Frame (mm)')}</th>
+                        <th>{t('கண்ணாடி உயரம் (mm)', 'Glass Height (mm)')}</th>
+                        <th>{t('கண்ணாடி அகலம் (mm)', 'Glass Width (mm)')}</th>
+                        <th style={{ width: '80px' }}>{t('எண்ணிக்கை', 'Qty (Pcs)')}</th>
+                        <th style={{ width: '90px' }}>{t('மொத்த பரப்பளவு', 'Total Area')}</th>
+                        <th>{t('கண்ணாடி விவரம்', 'Glass Specification')}</th>
                       </tr>
                     </thead>
 
@@ -596,10 +596,13 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
               {/* Sheet Footer */}
               <div className="a4-sheet-footer">
                 <span>
-                  Official L.S. INTERIORS Workshop Fabrication Order • All Sum Formulas & Deductions Verified
+                  {t(
+                    'அதிகாரப்பூர்வ L.S. INTERIORS பட்டறை தயாரிப்பு ஆர்டர் • அனைத்து சூத்திரங்களும் சரிபார்க்கப்பட்டன',
+                    'Official L.S. INTERIORS Workshop Fabrication Order • All Sum Formulas & Deductions Verified'
+                  )}
                 </span>
                 <span>
-                  Authorized Workshop Signature: ______________________
+                  {t('அங்கீகரிக்கப்பட்ட கையொப்பம்', 'Authorized Workshop Signature')}: ______________________
                 </span>
               </div>
             </div>
@@ -610,7 +613,8 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
         <div className="a4-modal-footer">
           <span style={{ fontSize: '12px', color: '#94a3b8' }}>
             <Layers className="w-4 h-4 inline mr-1" />
-            {results.length} windows ready for export
+            {results.length}{' '}
+            {t('ஜன்னல்கள் ஏற்றுமதிக்குத் தயார்', 'windows ready for export')}
           </span>
 
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -625,7 +629,7 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
               }}
             >
               <Printer className="w-4 h-4" />
-              <span>{t('à®…à®šà¯à®šà®¿à®Ÿà¯', 'Print')}</span>
+              <span>{t('அச்சிடு', 'Print')}</span>
             </button>
 
             <button
@@ -637,11 +641,11 @@ export const A4FabricationModal: React.FC<A4FabricationModalProps> = ({
               <Download className="w-4 h-4" />
               <span>
                 {isExporting
-                  ? 'Generating...'
+                  ? t('உருவாக்கப்படுகிறது...', 'Generating...')
                   : t(
-                    'HD à®µà¯†à®•à¯à®Ÿà®¾à®°à¯ PDF à®ªà®¤à®¿à®µà®¿à®±à®•à¯à®•à¯',
-                    'Download HD Vector PDF'
-                  )}
+                      'HD வெக்டார் PDF பதிவிறக்கு',
+                      'Download HD Vector PDF'
+                    )}
               </span>
             </button>
           </div>

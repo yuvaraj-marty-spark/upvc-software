@@ -577,7 +577,9 @@ export default function Dashboard({
         <div className="analytics-card">
           <div className="analytics-card-header">
             <h3>{t.monthlyTrend}</h3>
-            <span className="analytics-badge">Last 6 Months</span>
+            <span className="analytics-badge">
+              {language === 'en' ? 'Last 6 Months' : 'கடந்த 6 மாதங்கள்'}
+            </span>
           </div>
 
           <div className="chart-bars-container">
@@ -629,7 +631,9 @@ export default function Dashboard({
         <div className="analytics-card">
           <div className="analytics-card-header">
             <h3>{t.weeklyTrend}</h3>
-            <span className="analytics-badge">Last 6 Weeks</span>
+            <span className="analytics-badge">
+              {language === 'en' ? 'Last 6 Weeks' : 'கடந்த 6 வாரங்கள்'}
+            </span>
           </div>
 
           <div className="chart-bars-container">

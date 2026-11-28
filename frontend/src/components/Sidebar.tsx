@@ -72,7 +72,7 @@ function Sidebar({
 
         <div>
           <h2>LS INTERIORS</h2>
-          <p>Window Management</p>
+          <p>{language === 'en' ? 'Window Management' : 'ஜன்னல் மேலாண்மை'}</p>
         </div>
       </div>
 

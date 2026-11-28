@@ -214,10 +214,30 @@ const unitLabels: Record<RowUnit, string> = {
   mm: 'MM',
 }
 
+const unitLabelsTa: Record<RowUnit, string> = {
+  in: 'அங்குலம்',
+  cm: 'செ.மீ',
+  mm: 'மி.மீ',
+}
+
 const unitShortLabels: Record<RowUnit, string> = {
   in: 'in',
   cm: 'cm',
   mm: 'mm',
+}
+
+const unitShortLabelsTa: Record<RowUnit, string> = {
+  in: 'அங்குலம்',
+  cm: 'செ.மீ',
+  mm: 'மி.மீ',
+}
+
+const categoryLabelsTa: Record<string, string> = {
+  sliding: 'ஸ்லைடிங்',
+  open: 'திறக்கும் ஜன்னல்',
+  door: 'கதவு',
+  fixed: 'நிலையான ஜன்னல்',
+  ventilator: 'வென்டிலேட்டர்',
 }
 
 const convertToMm = (value: number, unit: RowUnit): number => {
@@ -272,6 +292,9 @@ function Measurements({
   language = 'en',
   onProjectActive,
 }: MeasurementsProps) {
+  const isTamil = language === 'ta'
+  const t = (en: string, ta: string) => (isTamil ? ta : en)
+
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
   const [isCadModalOpen, setIsCadModalOpen] = useState(false)
   const [cadSelectedIndex, setCadSelectedIndex] = useState(0)
@@ -1097,7 +1120,7 @@ function Measurements({
     }
 
     if (!customerName.trim()) {
-      window.alert('Please enter the customer name.')
+      window.alert(t('Please enter the customer name.', 'வாடிக்கையாளர் பெயரை உள்ளிடவும்.'))
       return
     }
 
@@ -1109,7 +1132,12 @@ function Measurements({
       const syncResult = await syncOrderToBackend(null, orderData)
 
       if (!syncResult) {
-        window.alert('Unable to save the order to the server. Please try again.')
+        window.alert(
+          t(
+            'Unable to save the order to the server. Please try again.',
+            'ஆர்டரை சர்வரில் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.'
+          )
+        )
         return
       }
 
@@ -1139,7 +1167,7 @@ function Measurements({
         setCurrentOrderId(orderToSave.id)
         onProjectActive?.(orderToSave.id)
         pendingProjectNameRef.current = syncResult.projectName
-        window.alert('Order saved successfully!')
+        window.alert(t('Order saved successfully!', 'ஆர்டர் வெற்றிகரமாக சேமிக்கப்பட்டது!'))
       }
     } finally {
       setIsSaving(false)
@@ -1156,7 +1184,7 @@ function Measurements({
     }
 
     if (!customerName.trim()) {
-      window.alert('Please enter the customer name.')
+      window.alert(t('Please enter the customer name.', 'வாடிக்கையாளர் பெயரை உள்ளிடவும்.'))
       return
     }
 
@@ -1205,7 +1233,7 @@ function Measurements({
 
       if (saveOrdersToStorage(updatedOrders)) {
         pendingProjectNameRef.current = syncResult.projectName
-        window.alert('Order updated successfully!')
+        window.alert(t('Order updated successfully!', 'ஆர்டர் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது!'))
       }
     } finally {
       setIsSaving(false)
@@ -1214,7 +1242,10 @@ function Measurements({
 
   const createNewOrder = () => {
     const confirmed = window.confirm(
-      'Start a new order? Any unsaved changes in the current form will be lost.'
+      t(
+        'Start a new order? Any unsaved changes in the current form will be lost.',
+        'புதிய ஆர்டரைத் தொடங்கவா? சேமிக்கப்படாத தற்போதைய மாற்றங்கள் இழக்கப்படும்.'
+      )
     )
 
     if (!confirmed) return
@@ -1417,10 +1448,10 @@ function Measurements({
             }}
           >
             {isLoadingProject
-              ? '⏳ Loading...'
+              ? t('⏳ Loading...', '⏳ ஏற்றப்படுகிறது...')
               : isSaving
-                ? '⏳ Saving...'
-                : '💾 Save Order'}
+                ? t('⏳ Saving...', '⏳ சேமிக்கிறது...')
+                : t('💾 Save Order', '💾 ஆர்டரை சேமி')}
           </button>
 
           <button
@@ -1428,7 +1459,7 @@ function Measurements({
             onClick={addRow}
             style={{ background: '#3b82f6' }}
           >
-            + Add Window
+            {t('+ Add Window', '+ ஜன்னல் சேர்க்க')}
           </button>
 
           <button
@@ -1446,9 +1477,12 @@ function Measurements({
               border: 'none',
               cursor: 'pointer',
             }}
-            title="Export Official A4 Workshop Order Sheet or Glass Order Sheet (PDF)"
+            title={t(
+              'Export Official A4 Workshop Order Sheet or Glass Order Sheet (PDF)',
+              'அதிகாரப்பூர்வ A4 பட்டறை அல்லது கிளாஸ் ஆர்டர் PDF பதிவிறக்கு'
+            )}
           >
-            📄 {language === 'en' ? 'Export A4 PDF' : 'A4 PDF ஏற்றுமதி'}
+            📄 {t('Export A4 PDF', 'A4 PDF ஏற்றுமதி')}
           </button>
 
           <button
@@ -1469,9 +1503,12 @@ function Measurements({
               border: 'none',
               cursor: 'pointer',
             }}
-            title="View 2D CAD Blueprints, Elevation and Section Cuts"
+            title={t(
+              'View 2D CAD Blueprints, Elevation and Section Cuts',
+              '2D CAD வரைபடம் மற்றும் பிரிவு வெட்டுகளைக் காண்க'
+            )}
           >
-            📐 {language === 'en' ? '2D CAD Drawing' : '2D வரைபடம் (CAD)'}
+            📐 {t('2D CAD Drawing', '2D வரைபடம் (CAD)')}
           </button>
 
           {!currentOrderId && (
@@ -1484,7 +1521,7 @@ function Measurements({
                 border: '1px solid #cbd5e1',
               }}
             >
-              + New Order
+              {t('+ New Order', '+ புதிய ஆர்டர்')}
             </button>
           )}
         </div>
@@ -1520,9 +1557,17 @@ function Measurements({
                 {currentOrder.serialNumber}
               </span>
             )}
-            <strong>Measurements for:</strong>{' '}
-            {displayedCustomerName || 'Customer'} — Click{' '}
-            <strong>Save Order</strong> to save your window changes.
+            <strong>{t('Measurements for:', 'அளவீடுகள்:')}</strong>{' '}
+            {displayedCustomerName || t('Customer', 'வாடிக்கையாளர்')} —{' '}
+            {isTamil ? (
+              <>
+                மாற்றங்களைச் சேமிக்க <strong>ஆர்டரை சேமி</strong> பொத்தானை அழுத்தவும்.
+              </>
+            ) : (
+              <>
+                Click <strong>Save Order</strong> to save your window changes.
+              </>
+            )}
           </span>
           <span
             style={{
@@ -1534,26 +1579,26 @@ function Measurements({
               fontWeight: 700,
             }}
           >
-            ✓ Project Loaded
+            {t('✓ Project Loaded', '✓ திட்டம் ஏற்றப்பட்டது')}
           </span>
         </div>
       )}
 
       <div className="tolerance-settings">
         <div>
-          <h3>Outer Frame Added MM / Tolerance</h3>
-          <p>Workshop added margin for outer frame calculations.</p>
+          <h3>{t('Outer Frame Added MM / Tolerance', 'வெளி சட்டகம் கூடுதல் MM / சகிப்புத்தன்மை')}</h3>
+          <p>{t('Workshop added margin for outer frame calculations.', 'வெளி சட்டக கணக்கீட்டிற்கான பட்டறை கூடுதல் அளவு.')}</p>
         </div>
 
         <label>
-          Added MM / Tolerance (mm)
+          {t('Added MM / Tolerance (mm)', 'கூடுதல் MM / சகிப்புத்தன்மை (mm)')}
           <div className="tolerance-stepper">
             <button
               type="button"
               className="tolerance-step-btn"
               onClick={() => adjustTolerance(-1)}
               disabled={defaultTolerance <= 0}
-              aria-label="Decrease added mm"
+              aria-label={t('Decrease added mm', 'கூடுதல் mm குறை')}
             >
               -
             </button>
@@ -1573,7 +1618,7 @@ function Measurements({
               type="button"
               className="tolerance-step-btn"
               onClick={() => adjustTolerance(1)}
-              aria-label="Increase added mm"
+              aria-label={t('Increase added mm', 'கூடுதல் mm கூட்டு')}
             >
               +
             </button>
@@ -1588,39 +1633,39 @@ function Measurements({
               setDefaultApplyTolerance(event.target.checked)
             }
           />
-          Apply Added MM
+          {t('Apply Added MM', 'கூடுதல் MM சேர்')}
         </label>
 
         <div className="unit-conversion-control">
-          <span className="unit-conversion-title">Unit Conversion</span>
+          <span className="unit-conversion-title">{t('Unit Conversion', 'அலகு மாற்றம்')}</span>
 
           <label>
-            From
+            {t('From', 'இருந்து')}
             <select
               value={fromUnit}
               onChange={(event) =>
                 handleFromUnitChange(event.target.value as RowUnit)
               }
             >
-              <option value="in">Inches</option>
-              <option value="cm">CM</option>
-              <option value="mm">MM</option>
+              <option value="in">{t('Inches', 'அங்குலம்')}</option>
+              <option value="cm">{t('CM', 'செ.மீ')}</option>
+              <option value="mm">{t('MM', 'மி.மீ')}</option>
             </select>
           </label>
 
           <span className="unit-conversion-arrow">→</span>
 
           <label>
-            To
+            {t('To', 'வரை')}
             <select
               value={toUnit}
               onChange={(event) =>
                 setToUnit(event.target.value as RowUnit)
               }
             >
-              <option value="in">Inches</option>
-              <option value="cm">CM</option>
-              <option value="mm">MM</option>
+              <option value="in">{t('Inches', 'அங்குலம்')}</option>
+              <option value="cm">{t('CM', 'செ.மீ')}</option>
+              <option value="mm">{t('MM', 'மி.மீ')}</option>
             </select>
           </label>
         </div>
@@ -1628,10 +1673,10 @@ function Measurements({
 
       <div className="measurement-order-details">
         <label>
-          Customer Name
+          {t('Customer Name', 'வாடிக்கையாளர் பெயர்')}
           <input
             type="text"
-            placeholder="Enter customer name"
+            placeholder={t('Enter customer name', 'வாடிக்கையாளர் பெயரை உள்ளிடுக')}
             value={displayedCustomerName}
             readOnly={selectedCustomer !== null}
             onChange={(event) => setCustomerName(event.target.value)}
@@ -1639,10 +1684,10 @@ function Measurements({
         </label>
 
         <label>
-          Customer Phone Number
+          {t('Customer Phone Number', 'வாடிக்கையாளர் தொலைபேசி எண்')}
           <input
             type="tel"
-            placeholder="Enter phone number"
+            placeholder={t('Enter phone number', 'தொலைபேசி எண்ணை உள்ளிடுக')}
             value={displayedCustomerPhone}
             readOnly={selectedCustomer !== null}
             onChange={(event) => setCustomerPhone(event.target.value)}
@@ -1650,7 +1695,7 @@ function Measurements({
         </label>
 
         <label>
-          Order Date
+          {t('Order Date', 'ஆர்டர் தேதி')}
           <input
             type="date"
             value={orderDate}
@@ -1664,45 +1709,48 @@ function Measurements({
         <table className="measurement-table">
           <thead>
             <tr>
-              <th rowSpan={2}>S.No / Var</th>
-              <th rowSpan={2}>Colour</th>
+              <th rowSpan={2}>{t('S.No / Var', 'வ.எண்')}</th>
+              <th rowSpan={2}>{t('Colour', 'நிறம்')}</th>
               <th rowSpan={2}>
-                Height × Width
+                {t('Height × Width', 'உயரம் × அகலம்')}
                 <br />
                 <span className="table-unit-note">
-                  Enter in {unitLabels[fromUnit]}
+                  {t(
+                    `Enter in ${unitLabels[fromUnit]}`,
+                    `${unitLabelsTa[fromUnit]}-ல் உள்ளிடவும்`
+                  )}
                 </span>
               </th>
               <th rowSpan={2}>
-                Outer Frame ({unitShortLabels[toUnit]})
+                {t('Outer Frame', 'வெளி சட்டகம்')} ({isTamil ? unitShortLabelsTa[toUnit] : unitShortLabels[toUnit]})
                 <br />
                 (H × W)
               </th>
-              <th colSpan={2}>Model Details</th>
-              <th colSpan={4}>Sash Cut ({unitShortLabels[toUnit]})</th>
-              <th rowSpan={2}>Interlock ({unitShortLabels[toUnit]})</th>
+              <th colSpan={2}>{t('Model Details', 'மாடல் விவரம்')}</th>
+              <th colSpan={4}>{t('Sash Cut', 'ஷட்டர் கட்டிங்')} ({isTamil ? unitShortLabelsTa[toUnit] : unitShortLabels[toUnit]})</th>
+              <th rowSpan={2}>{t('Interlock', 'இன்டர்லாக்')} ({isTamil ? unitShortLabelsTa[toUnit] : unitShortLabels[toUnit]})</th>
               {showMullionColumn && (
                 <th rowSpan={2}>
-                  Mullion ({unitShortLabels[toUnit]})
+                  {t('Mullion', 'முல்லியன்')} ({isTamil ? unitShortLabelsTa[toUnit] : unitShortLabels[toUnit]})
                   <br />
-                  (H Pcs)
+                  ({t('H Pcs', 'உயரம் எண்')})
                 </th>
               )}
               {showMeshColumn && (
-                <th colSpan={2}>Mesh Cut ({unitShortLabels[toUnit]})</th>
+                <th colSpan={2}>{t('Mesh Cut', 'கொசு வலை')} ({isTamil ? unitShortLabelsTa[toUnit] : unitShortLabels[toUnit]})</th>
               )}
-              <th colSpan={3}>Glass Cut ({unitShortLabels[toUnit]})</th>
-              <th rowSpan={2}>Glass Type</th>
-              <th rowSpan={2}>Status</th>
-              <th rowSpan={2}>Action</th>
+              <th colSpan={3}>{t('Glass Cut', 'கண்ணாடி கட்டிங்')} ({isTamil ? unitShortLabelsTa[toUnit] : unitShortLabels[toUnit]})</th>
+              <th rowSpan={2}>{t('Glass Type', 'கண்ணாடி வகை')}</th>
+              <th rowSpan={2}>{t('Status', 'நிலை')}</th>
+              <th rowSpan={2}>{t('Action', 'செயல்')}</th>
             </tr>
             <tr className="sub-heading">
-              <th>Model Name</th>
-              <th>Material</th>
+              <th>{t('Model Name', 'மாடல் பெயர்')}</th>
+              <th>{t('Material', 'பொருள்')}</th>
               <th>H</th>
               <th>W</th>
-              <th>H Pcs</th>
-              <th>W Pcs</th>
+              <th>{t('H Pcs', 'உயரம் எண்')}</th>
+              <th>{t('W Pcs', 'அகலம் எண்')}</th>
               {showMeshColumn && (
                 <>
                   <th>H</th>
@@ -1711,7 +1759,7 @@ function Measurements({
               )}
               <th>H</th>
               <th>W</th>
-              <th>Qty</th>
+              <th>{t('Qty', 'எண்')}</th>
             </tr>
           </thead>
 
@@ -1774,7 +1822,7 @@ function Measurements({
                           type="number"
                           min="0"
                           step="any"
-                          placeholder="Height"
+                          placeholder={t('Height', 'உயரம்')}
                           value={row.height}
                           onChange={(event) => {
                             updateRow(row.id, 'height', event.target.value)
@@ -1782,14 +1830,14 @@ function Measurements({
                           }}
                         />
                         <select
-                          aria-label="Height fraction"
+                          aria-label={t('Height fraction', 'உயரம் பின்னம்')}
                           value=""
                           onChange={(event) =>
                             applyFraction(row, 'height', event.target.value)
                           }
                         >
                           <option value="" disabled>
-                            + Fraction
+                            {t('+ Fraction', '+ பின்னம்')}
                           </option>
                           {fractionOptions.map((fraction) => (
                             <option
@@ -1809,7 +1857,7 @@ function Measurements({
                           type="number"
                           min="0"
                           step="any"
-                          placeholder="Width"
+                          placeholder={t('Width', 'அகலம்')}
                           value={row.width}
                           onChange={(event) => {
                             updateRow(row.id, 'width', event.target.value)
@@ -1817,14 +1865,14 @@ function Measurements({
                           }}
                         />
                         <select
-                          aria-label="Width fraction"
+                          aria-label={t('Width fraction', 'அகலம் பின்னம்')}
                           value=""
                           onChange={(event) =>
                             applyFraction(row, 'width', event.target.value)
                           }
                         >
                           <option value="" disabled>
-                            + Fraction
+                            {t('+ Fraction', '+ பின்னம்')}
                           </option>
                           {fractionOptions.map((fraction) => (
                             <option
@@ -1863,9 +1911,9 @@ function Measurements({
                       }}
                       style={{ minWidth: '160px' }}
                     >
-                      <option value="">Select Window / Door Model</option>
+                      <option value="">{t('Select Window / Door Model', 'ஜன்னல் / கதவு மாடலைத் தேர்ந்தெடுக்கவும்')}</option>
 
-                      <optgroup label="58mm Sliding Windows">
+                      <optgroup label={t('58mm Sliding Windows', '58mm ஸ்லைடிங் ஜன்னல்கள்')}>
                         {WINDOW_MODELS.filter(
                           (model) =>
                             model.category === 'sliding' &&
@@ -1877,7 +1925,7 @@ function Measurements({
                         ))}
                       </optgroup>
 
-                      <optgroup label="66mm Sliding Windows">
+                      <optgroup label={t('66mm Sliding Windows', '66mm ஸ்லைடிங் ஜன்னல்கள்')}>
                         {WINDOW_MODELS.filter(
                           (model) =>
                             model.category === 'sliding' &&
@@ -1889,7 +1937,7 @@ function Measurements({
                         ))}
                       </optgroup>
 
-                      <optgroup label="85mm Sliding Doors">
+                      <optgroup label={t('85mm Sliding Doors', '85mm ஸ்லைடிங் கதவுகள்')}>
                         {WINDOW_MODELS.filter(
                           (model) =>
                             model.category === 'sliding' &&
@@ -1901,7 +1949,7 @@ function Measurements({
                         ))}
                       </optgroup>
 
-                      <optgroup label="60mm Casement / Open Windows">
+                      <optgroup label={t('60mm Casement / Open Windows', '60mm திறக்கும் ஜன்னல்கள்')}>
                         {WINDOW_MODELS.filter(
                           (model) => model.category === 'open'
                         ).map((model) => (
@@ -1911,7 +1959,7 @@ function Measurements({
                         ))}
                       </optgroup>
 
-                      <optgroup label="108mm Open Doors">
+                      <optgroup label={t('108mm Open Doors', '108mm திறக்கும் கதவுகள்')}>
                         {WINDOW_MODELS.filter(
                           (model) => model.category === 'door'
                         ).map((model) => (
@@ -1921,7 +1969,7 @@ function Measurements({
                         ))}
                       </optgroup>
 
-                      <optgroup label="Fixed & Ventilators">
+                      <optgroup label={t('Fixed & Ventilators', 'நிலையான ஜன்னல் & வென்டிலேட்டர்கள்')}>
                         {WINDOW_MODELS.filter(
                           (model) =>
                             (model.category === 'fixed' ||
@@ -2018,14 +2066,14 @@ function Measurements({
                   </td>
                   <td>
                     {calculation && calculation.glassPieces > 0
-                      ? `${calculation.glassPieces} pcs`
+                      ? `${calculation.glassPieces} ${t('pcs', 'எண்')}`
                       : '-'}
                   </td>
 
                   <td>
                     <input
                       type="text"
-                      placeholder="Glass type"
+                      placeholder={t('Glass type', 'கண்ணாடி வகை')}
                       value={row.glassType}
                       onChange={(event) =>
                         updateRow(row.id, 'glassType', event.target.value)
@@ -2036,7 +2084,7 @@ function Measurements({
                   <td>
                     <button
                       type="button"
-                      title="Click to toggle fabrication status"
+                      title={t('Click to toggle fabrication status', 'தயாரிப்பு நிலையை மாற்ற அழுத்தவும்')}
                       style={{
                         borderRadius: '6px',
                         padding: '5px 10px',
@@ -2086,8 +2134,8 @@ function Measurements({
                       }}
                     >
                       {row.status === 'finished'
-                        ? '✓ Finished'
-                        : '⏳ Pending'}
+                        ? t('✓ Finished', '✓ முடிந்தது')
+                        : t('⏳ Pending', '⏳ நிலுவை')}
                     </button>
                   </td>
 
@@ -2098,7 +2146,7 @@ function Measurements({
                         className="copy-row-button"
                         onClick={() => copyRow(row.id)}
                       >
-                        Copy
+                        {t('Copy', 'நகல்')}
                       </button>
                       <button
                         type="button"
@@ -2106,7 +2154,7 @@ function Measurements({
                         onClick={() => deleteRow(row.id)}
                         disabled={rows.length === 1}
                       >
-                        Delete
+                        {t('Delete', 'நீக்கு')}
                       </button>
                     </div>
                   </td>
@@ -2131,7 +2179,7 @@ function Measurements({
           {deletedWindows.length > 0 && (
             <>
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
-                Deleted Windows:
+                {t('Deleted Windows:', 'நீக்கப்பட்ட ஜன்னல்கள்:')}
               </span>
               {deletedWindows.map((entry, idx) => {
                 const { modelId, height, width, glassType } = entry.row
@@ -2153,8 +2201,14 @@ function Measurements({
                     onClick={() => restoreDeletedWindow(idx)}
                     title={
                       details
-                        ? `Restore ${entry.originalLabel} (${details})`
-                        : `Restore ${entry.originalLabel}`
+                        ? t(
+                            `Restore ${entry.originalLabel} (${details})`,
+                            `${entry.originalLabel} மீட்டெடு (${details})`
+                          )
+                        : t(
+                            `Restore ${entry.originalLabel}`,
+                            `${entry.originalLabel} மீட்டெடு`
+                          )
                     }
                     style={{
                       background: '#fef3c7',
@@ -2167,7 +2221,7 @@ function Measurements({
                       cursor: 'pointer',
                     }}
                   >
-                    ↺ Restore {entry.originalLabel}
+                    ↺ {t('Restore', 'மீட்டெடு')} {entry.originalLabel}
                     {details ? ` · ${details}` : ''}
                   </button>
                 )
@@ -2175,7 +2229,7 @@ function Measurements({
               <button
                 type="button"
                 onClick={() => setDeletedWindows([])}
-                title="Clear all deleted window restore buttons"
+                title={t('Clear all deleted window restore buttons', 'அனைத்தையும் அழி')}
                 style={{
                   background: '#fee2e2',
                   color: '#991b1b',
@@ -2187,25 +2241,25 @@ function Measurements({
                   cursor: 'pointer',
                 }}
               >
-                ✕ Clear All
+                ✕ {t('Clear All', 'அனைத்தையும் நீக்கு')}
               </button>
             </>
           )}
         </div>
 
         <button type="button" onClick={addRow} style={{ background: '#3b82f6' }}>
-          + Add Window
+          {t('+ Add Window', '+ ஜன்னல் சேர்க்க')}
         </button>
       </div>
 
       <div className="window-summary">
         <div className="window-summary-header">
           <div>
-            <h3>Window & Door Summary</h3>
-            <p>Total fabrication quantities grouped by profile model.</p>
+            <h3>{t('Window & Door Summary', 'ஜன்னல் & கதவு சுருக்கம்')}</h3>
+            <p>{t('Total fabrication quantities grouped by profile model.', 'மாடல் வாரியான மொத்த தயாரிப்பு எண்ணிக்கை.')}</p>
           </div>
           <div className="window-summary-total">
-            <span>Total Units</span>
+            <span>{t('Total Units', 'மொத்த எண்ணிக்கை')}</span>
             <strong>{rows.length}</strong>
           </div>
         </div>
@@ -2214,12 +2268,12 @@ function Measurements({
           <table className="measurement-table window-summary-table">
             <thead>
               <tr>
-                <th>S.No</th>
-                <th>Model Name</th>
-                <th>Category</th>
-                <th>Material</th>
-                <th>Short Code</th>
-                <th>Window Quantity</th>
+                <th>{t('S.No', 'வ.எண்')}</th>
+                <th>{t('Model Name', 'மாடல் பெயர்')}</th>
+                <th>{t('Category', 'வகை')}</th>
+                <th>{t('Material', 'பொருள்')}</th>
+                <th>{t('Short Code', 'குறியீடு')}</th>
+                <th>{t('Window Quantity', 'ஜன்னல் எண்ணிக்கை')}</th>
               </tr>
             </thead>
             <tbody>
@@ -2228,7 +2282,9 @@ function Measurements({
                   <td>{index + 1}</td>
                   <td>{model.name}</td>
                   <td style={{ textTransform: 'capitalize' }}>
-                    {model.category}
+                    {isTamil
+                      ? categoryLabelsTa[model.category] || model.category
+                      : model.category}
                   </td>
                   <td>{model.material}</td>
                   <td>{model.shortCode}</td>
@@ -2241,7 +2297,7 @@ function Measurements({
               {unselectedModelCount > 0 && (
                 <tr>
                   <td>{modelSummary.length + 1}</td>
-                  <td>Model Not Selected</td>
+                  <td>{t('Model Not Selected', 'மாடல் தேர்ந்தெடுக்கப்படவில்லை')}</td>
                   <td>-</td>
                   <td>-</td>
                   <td>-</td>
@@ -2251,13 +2307,13 @@ function Measurements({
 
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={6}>No windows added yet.</td>
+                  <td colSpan={6}>{t('No windows added yet.', 'இன்னும் ஜன்னல்கள் சேர்க்கப்படவில்லை.')}</td>
                 </tr>
               )}
             </tbody>
             <tfoot>
               <tr>
-                <th colSpan={5}>Total Windows & Doors</th>
+                <th colSpan={5}>{t('Total Windows & Doors', 'மொத்த ஜன்னல்கள் & கதவுகள்')}</th>
                 <th>{rows.length}</th>
               </tr>
             </tfoot>
@@ -2266,7 +2322,10 @@ function Measurements({
       </div>
 
       <div className="measurement-footer">
-        <span>{rows.length} window row(s) configured</span>
+        <span>
+          {rows.length}{' '}
+          {t('window row(s) configured', 'ஜன்னல் வரிசைகள் அமைக்கப்பட்டுள்ளன')}
+        </span>
       </div>
 
       {isExportModalOpen && (

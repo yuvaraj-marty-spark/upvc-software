@@ -626,7 +626,9 @@ export default function Settings({
       scheduleBackendSync(updatedAll)
       return updatedAll
     })
-    setSaveStatus('Auto-saved!')
+    setSaveStatus(
+      language === 'en' ? 'Auto-saved!' : 'தானாகச் சேமிக்கப்பட்டது!'
+    )
     setTimeout(() => setSaveStatus(''), 2000)
   }
 
@@ -681,7 +683,11 @@ export default function Settings({
       }
       return updated
     })
-    setSaveStatus('Reset to workshop defaults')
+    setSaveStatus(
+      language === 'en'
+        ? 'Reset to workshop defaults'
+        : 'பணிமனை இயல்புநிலைக்கு மீட்டமைக்கப்பட்டது'
+    )
     setTimeout(() => setSaveStatus(''), 2000)
   }
 
@@ -703,7 +709,11 @@ export default function Settings({
     } else {
       clearDraftFormulas()
     }
-    setSaveStatus('All models reset to defaults')
+    setSaveStatus(
+      language === 'en'
+        ? 'All models reset to defaults'
+        : 'அனைத்து மாடல்களும் இயல்புநிலைக்கு மீட்டமைக்கப்பட்டன'
+    )
     setTimeout(() => setSaveStatus(''), 2000)
   }
 
@@ -906,7 +916,8 @@ export default function Settings({
               </h3>
               <span>
                 {language === 'en' ? 'Material Series' : 'பொருள் தொடர்'}:{' '}
-                <strong>{activePreset.material}</strong> | Code:{' '}
+                <strong>{activePreset.material}</strong> |{' '}
+                {language === 'en' ? 'Code' : 'குறியீடு'}:{' '}
                 <code>{activePreset.category.toUpperCase()}</code>
               </span>
             </div>
@@ -954,7 +965,7 @@ export default function Settings({
                 </label>
                 <input
                   type="number"
-                  placeholder={`Default: ${activePreset.heightDeduction} mm (H - ${activePreset.heightDeduction})`}
+                  placeholder={`${language === 'en' ? 'Default' : 'இயல்புநிலை'}: ${activePreset.heightDeduction} mm (H - ${activePreset.heightDeduction})`}
                   value={activeOverrides.heightDeductionMM ?? ''}
                   onChange={(e) =>
                     updateOverride(
@@ -964,7 +975,7 @@ export default function Settings({
                   }
                 />
                 <span className="settings-field-note">
-                  Outer Frame H - {activeOverrides.heightDeductionMM ?? activePreset.heightDeduction} mm
+                  {language === 'en' ? 'Outer Frame H' : 'வெளி சட்டகம் H'} - {activeOverrides.heightDeductionMM ?? activePreset.heightDeduction} mm
                 </span>
               </div>
             )}
@@ -973,11 +984,21 @@ export default function Settings({
             {activePreset.widthType !== 'none' && (
               <div className="settings-field">
                 <label>
-                  {activePreset.widthLabel} (mm)
+                  {language === 'en'
+                    ? `${activePreset.widthLabel} (mm)`
+                    : activePreset.widthType === 'addition'
+                      ? 'அகலம் கூடுதல் / ஓவர்லேப் (mm)'
+                      : activePreset.widthLabel.includes('W/2')
+                        ? 'அகலம் கழித்தல் (W/2 - X) (mm)'
+                        : activePreset.widthLabel.includes('W/3')
+                          ? 'அகலம் கழித்தல் (W/3 - X) (mm)'
+                          : activePreset.widthLabel.includes('W/4')
+                            ? 'அகலம் கழித்தல் (W/4 - X) (mm)'
+                            : 'அகலம் கழித்தல் (mm)'}
                 </label>
                 <input
                   type="number"
-                  placeholder={`Default: ${activePreset.widthValue} mm`}
+                  placeholder={`${language === 'en' ? 'Default' : 'இயல்புநிலை'}: ${activePreset.widthValue} mm`}
                   value={
                     activePreset.widthType === 'addition'
                       ? activeOverrides.widthAdditionMM ?? ''
@@ -995,14 +1016,14 @@ export default function Settings({
                 />
                 <span className="settings-field-note">
                   {activePreset.widthType === 'addition'
-                    ? `W + ${activeOverrides.widthAdditionMM ?? activePreset.widthValue} mm overlap`
+                    ? `W + ${activeOverrides.widthAdditionMM ?? activePreset.widthValue} mm ${language === 'en' ? 'overlap' : 'கூடுதல்'}`
                     : activePreset.widthLabel.includes('W/2')
-                    ? `(W / 2) - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm deduction`
+                    ? `(W / 2) - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm ${language === 'en' ? 'deduction' : 'கழித்தல்'}`
                     : activePreset.widthLabel.includes('W/3')
-                    ? `(W / 3) - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm deduction`
+                    ? `(W / 3) - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm ${language === 'en' ? 'deduction' : 'கழித்தல்'}`
                     : activePreset.widthLabel.includes('W/4')
-                    ? `(W / 4) - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm deduction`
-                    : `W - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm deduction`}
+                    ? `(W / 4) - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm ${language === 'en' ? 'deduction' : 'கழித்தல்'}`
+                    : `W - ${activeOverrides.widthDeductionMM ?? activePreset.widthValue} mm ${language === 'en' ? 'deduction' : 'கழித்தல்'}`}
                 </span>
               </div>
             )}
@@ -1021,7 +1042,7 @@ export default function Settings({
                 </label>
                 <input
                   type="number"
-                  placeholder={`Default: ${activePreset.glassDeduction} mm`}
+                  placeholder={`${language === 'en' ? 'Default' : 'இயல்புநிலை'}: ${activePreset.glassDeduction} mm`}
                   value={activeOverrides.glassDeductionMM ?? ''}
                   onChange={(e) =>
                     updateOverride(
@@ -1032,8 +1053,8 @@ export default function Settings({
                 />
                 <span className="settings-field-note">
                   {activePreset.glassReference === 'shutter'
-                    ? `Glass = Shutter - ${activeOverrides.glassDeductionMM ?? activePreset.glassDeduction} mm`
-                    : `Glass = Outer Frame (OU) - ${activeOverrides.glassDeductionMM ?? activePreset.glassDeduction} mm`}
+                    ? `${language === 'en' ? 'Glass' : 'கண்ணாடி'} = ${language === 'en' ? 'Shutter' : 'ஷட்டர்'} - ${activeOverrides.glassDeductionMM ?? activePreset.glassDeduction} mm`
+                    : `${language === 'en' ? 'Glass' : 'கண்ணாடி'} = ${language === 'en' ? 'Outer Frame (OU)' : 'வெளி சட்டகம்'} - ${activeOverrides.glassDeductionMM ?? activePreset.glassDeduction} mm`}
                 </span>
               </div>
             ) : (
@@ -1069,7 +1090,7 @@ export default function Settings({
                 </label>
                 <input
                   type="number"
-                  placeholder={`Default: ${activePreset.defaultMullionDeduction ?? 6} mm (H - 6)`}
+                  placeholder={`${language === 'en' ? 'Default' : 'இயல்புநிலை'}: ${activePreset.defaultMullionDeduction ?? 6} mm (H - 6)`}
                   value={activeOverrides.mullionDeductionMM ?? ''}
                   onChange={(e) =>
                     updateOverride(
@@ -1079,7 +1100,7 @@ export default function Settings({
                   }
                 />
                 <span className="settings-field-note">
-                  Mullion Cut = Outer Frame H - {activeOverrides.mullionDeductionMM ?? activePreset.defaultMullionDeduction ?? 6} mm
+                  {language === 'en' ? 'Mullion Cut = Outer Frame H' : 'முல்லியன் = வெளி சட்டகம் H'} - {activeOverrides.mullionDeductionMM ?? activePreset.defaultMullionDeduction ?? 6} mm
                 </span>
               </div>
             )}
@@ -1095,7 +1116,7 @@ export default function Settings({
                   </label>
                   <input
                     type="number"
-                    placeholder={`Default: ${activePreset.defaultMeshDeduction ?? 0} mm`}
+                    placeholder={`${language === 'en' ? 'Default' : 'இயல்புநிலை'}: ${activePreset.defaultMeshDeduction ?? 0} mm`}
                     value={
                       activeOverrides.meshHeightDeductionMM ??
                       activeOverrides.meshDeductionMM ??
@@ -1112,8 +1133,10 @@ export default function Settings({
                     {(selectedModel === '85-2.5' || selectedModel === '85-3-mesh') &&
                     activeOverrides.meshHeightDeductionMM === undefined &&
                     activeOverrides.meshDeductionMM === undefined
-                      ? 'Mesh Height = Same as Sash Height (or enter H - X mm)'
-                      : `Mesh Height = Outer Frame H - ${
+                      ? language === 'en'
+                        ? 'Mesh Height = Same as Sash Height (or enter H - X mm)'
+                        : 'கொசுவலை உயரம் = ஷட்டர் உயரத்திற்கு சமம்'
+                      : `${language === 'en' ? 'Mesh Height = Outer Frame H' : 'கொசுவலை உயரம் = வெளி சட்டகம் H'} - ${
                           activeOverrides.meshHeightDeductionMM ??
                           activeOverrides.meshDeductionMM ??
                           activePreset.defaultMeshDeduction ??
@@ -1130,7 +1153,7 @@ export default function Settings({
                   </label>
                   <input
                     type="number"
-                    placeholder={`Default: ${
+                    placeholder={`${language === 'en' ? 'Default' : 'இயல்புநிலை'}: ${
                       activePreset.defaultMeshWidthDeduction ?? activePreset.widthValue
                     } mm`}
                     value={
@@ -1177,14 +1200,14 @@ export default function Settings({
             <table className="settings-preview-table">
               <thead>
                 <tr>
-                  <th>Outer Frame (H × W)</th>
-                  <th>Sash Cut (H × W)</th>
-                  <th>Sash Pieces</th>
-                  <th>Interlock</th>
-                  <th>Mullion</th>
-                  <th>Mesh Cut</th>
-                  <th>Glass Cut (H × W)</th>
-                  <th>Glass Pcs</th>
+                  <th>{language === 'en' ? 'Outer Frame (H × W)' : 'வெளி சட்டகம் (H × W)'}</th>
+                  <th>{language === 'en' ? 'Sash Cut (H × W)' : 'ஷட்டர் கட்டிங் (H × W)'}</th>
+                  <th>{language === 'en' ? 'Sash Pieces' : 'ஷட்டர் எண்'}</th>
+                  <th>{language === 'en' ? 'Interlock' : 'இன்டர்லாக்'}</th>
+                  <th>{language === 'en' ? 'Mullion' : 'முல்லியன்'}</th>
+                  <th>{language === 'en' ? 'Mesh Cut' : 'கொசுவலை'}</th>
+                  <th>{language === 'en' ? 'Glass Cut (H × W)' : 'கண்ணாடி கட்டிங் (H × W)'}</th>
+                  <th>{language === 'en' ? 'Glass Pcs' : 'கண்ணாடி எண்'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1199,7 +1222,7 @@ export default function Settings({
                   </td>
                   <td>
                     {previewResult.sashHeightPieces > 0
-                      ? `${previewResult.sashHeightPieces} pcs`
+                      ? `${previewResult.sashHeightPieces} ${language === 'en' ? 'pcs' : 'எண்'}`
                       : '-'}
                   </td>
                   <td>
@@ -1209,7 +1232,7 @@ export default function Settings({
                   </td>
                   <td>
                     {previewResult.mullion !== null
-                      ? `${previewResult.mullion} mm (${previewResult.mullionPieces} pc)`
+                      ? `${previewResult.mullion} mm (${previewResult.mullionPieces} ${language === 'en' ? 'pc' : 'எண்'})`
                       : '-'}
                   </td>
                   <td>
@@ -1224,7 +1247,7 @@ export default function Settings({
                   </td>
                   <td>
                     {previewResult.glassPieces > 0
-                      ? `${previewResult.glassPieces} pcs`
+                      ? `${previewResult.glassPieces} ${language === 'en' ? 'pcs' : 'எண்'}`
                       : '-'}
                   </td>
                 </tr>
